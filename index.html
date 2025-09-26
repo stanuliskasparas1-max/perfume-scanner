@@ -13,67 +13,90 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      padding: 10px;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
     }
     h1 {
-      margin: 10px 0;
       font-size: 2rem;
-      text-align: center;
-    }
-    #scanner {
-      width: 95vw;
-      max-width: 500px;
-      height: 60vh;
-      border: 6px solid red;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
       margin-bottom: 20px;
     }
-    #scanner.active {
-      border-color: #00ff66;
-      box-shadow: 0 0 35px rgba(0, 255, 100, 0.7);
+    .hidden { display: none; }
+    .menu button, #form-container button {
+      font-size: 1.5rem;
+      padding: 12px 20px;
+      margin: 10px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      background: #00aaff;
+      color: white;
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      background: #0088cc;
+      transform: scale(1.05);
+    }
+    #scanner {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      border: none;
+    }
+    #flash-effect {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,255,100,0.3);
+      display: none;
+      animation: flash 0.4s ease-out;
+    }
+    @keyframes flash {
+      from { opacity: 1; }
+      to { opacity: 0; }
     }
     #form-container {
       text-align: center;
     }
-    select, input, button {
+    select, input {
       font-size: 1.5rem;
       padding: 10px;
       margin: 10px;
       border-radius: 12px;
       border: none;
       outline: none;
-    }
-    select, input {
-      width: 180px;
-    }
-    button {
-      background: #00aaff;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.2s;
-    }
-    button:hover {
-      background: #0088cc;
-      transform: scale(1.05);
+      width: 200px;
     }
     #result {
-      margin-top: 20px;
-      font-size: 1.4rem;
-      text-align: center;
+      margin-top: 10px;
+      font-size: 1.2rem;
       color: #00ffcc;
     }
   </style>
 </head>
 <body>
-  <h1>Perfume Scanner</h1>
+  <!-- Menu screen -->
+  <div id="menu" class="menu">
+    <h1>Perfume Scanner</h1>
+    <button onclick="showScanner()">Start Reading</button>
+    <button onclick="showSettings()">Settings</button>
+  </div>
 
-  <div id="scanner"></div>
+  <!-- Settings screen -->
+  <div id="settings" class="hidden">
+    <h1>Settings</h1>
+    <p>Version: <span id="version">v1.0.0</span></p>
+    <button onclick="backToMenu()">Back</button>
+  </div>
 
-  <div id="form-container">
+  <!-- Scanner screen -->
+  <div id="scanner-container" class="hidden">
+    <div id="scanner"></div>
+    <div id="flash-effect"></div>
+  </div>
+
+  <!-- Form screen -->
+  <div id="form-container" class="hidden">
     <label for="quantity">Quantity:</label>
     <select id="quantity">
       <option value="30">30 ml</option>
@@ -89,89 +112,100 @@
            placeholder="Enter ml" 
            style="display:none;">
     <br>
-    <button onclick="confirmSale()">Confirm Sale</button>
+    <button onclick="confirmSale()">Send</button>
+    <div id="result"></div>
   </div>
-
-  <div id="result"></div>
 
   <!-- html5-qrcode library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
+    const menu = document.getElementById("menu");
+    const settings = document.getElementById("settings");
+    const scannerContainer = document.getElementById("scanner-container");
+    const formContainer = document.getElementById("form-container");
     const scannerDiv = document.getElementById("scanner");
+    const flashEffect = document.getElementById("flash-effect");
     const quantitySelect = document.getElementById("quantity");
     const customQuantity = document.getElementById("customQuantity");
     const resultDiv = document.getElementById("result");
 
     let lastCode = null;
     let html5QrCode;
+    const APP_VERSION = "v1.0.0";
 
-    // Show custom input if needed
+    document.getElementById("version").textContent = APP_VERSION;
+
     quantitySelect.addEventListener('change', () => {
       customQuantity.style.display = (quantitySelect.value === 'custom') ? 'inline-block' : 'none';
     });
 
-    // Start scanner
+    function showScanner() {
+      menu.classList.add("hidden");
+      settings.classList.add("hidden");
+      formContainer.classList.add("hidden");
+      scannerContainer.classList.remove("hidden");
+      startScanner();
+    }
+
+    function showSettings() {
+      menu.classList.add("hidden");
+      settings.classList.remove("hidden");
+    }
+
+    function backToMenu() {
+      settings.classList.add("hidden");
+      menu.classList.remove("hidden");
+    }
+
     function startScanner() {
       html5QrCode = new Html5Qrcode("scanner");
       html5QrCode.start(
-        { facingMode: "environment" }, // back camera
-        {
-          fps: 15,
-          qrbox: { width: 300, height: 200 }
-        },
+        { facingMode: "environment" },
+        { fps: 20, qrbox: { width: 300, height: 200 } },
         code => {
           if (!lastCode) {
             lastCode = code;
-            scannerDiv.classList.add("active");
-            html5QrCode.stop(); // freeze camera
+            flashEffect.style.display = "block";
+            setTimeout(() => flashEffect.style.display = "none", 400);
+            html5QrCode.stop().then(() => {
+              scannerContainer.classList.add("hidden");
+              formContainer.classList.remove("hidden");
+            });
           }
         },
-        errorMessage => {
-          // console.log("Scanning error:", errorMessage);
-        }
-      ).catch(err => console.error("Scanner start error:", err));
+        err => {}
+      ).catch(err => console.error("Scanner error:", err));
     }
 
-    // Confirm sale
     async function confirmSale() {
-      if (!lastCode) {
-        alert("No barcode scanned yet!");
-        return;
-      }
       let qty = quantitySelect.value;
       if (qty === 'custom') qty = customQuantity.value || "0";
 
       const saleData = { barcode: lastCode, volume: qty };
 
       try {
-        // Send to Google Sheets
         await fetch("https://script.google.com/macros/s/AKfycbwcXFTQY-pZMCWy8hN82XGqt8jouZv2K7hcXF3_21mASKX0YGX2wR33-9Ai834ErVVAzA/exec", {
           method: "POST",
-          mode: "no-cors", // bypass CORS
+          mode: "no-cors",
           body: JSON.stringify(saleData),
           headers: { "Content-Type": "application/json" }
         });
-
-        resultDiv.textContent = `✅ Sent: ${lastCode} | ${qty} ml (check sheet)`;
-        console.log("Sent:", saleData);
-
+        resultDiv.textContent = `✅ Sent: ${lastCode} | ${qty} ml`;
       } catch (err) {
-        console.error("Error:", err);
-        alert("❌ Failed to send sale!");
+        resultDiv.textContent = "❌ Failed to send!";
       }
 
-      // Reset for next scan immediately
+      // Reset for next scan
       lastCode = null;
-      scannerDiv.classList.remove("active");
-      startScanner(); // restart camera
+      setTimeout(() => {
+        formContainer.classList.add("hidden");
+        resultDiv.textContent = "";
+        scannerContainer.classList.remove("hidden");
+        startScanner();
+      }, 800);
     }
-
-    // Start first scan
-    startScanner();
   </script>
 </body>
-</html>
-
 </html>
 
 
