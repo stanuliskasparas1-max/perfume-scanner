@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Perfume Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="script.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    #reader { width: 300px; margin: auto; }
+    select, button { margin-top: 10px; padding: 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Perfume Sale Scanner</h2>
+  <div id="reader"></div>
+  <p id="result"></p>
+  
+  <label for="ml">Choose volume:</label>
+  <select id="ml">
+    <option value="30">30 ml</option>
+    <option value="40">40 ml</option>
+    <option value="50">50 ml</option>
+    <option value="Custom">Custom</option>
+  </select><br>
+
+  <button onclick="confirmSale()">Confirm Sale</button>
+</body>
+</html>
