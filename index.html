@@ -88,7 +88,13 @@
       <option value="50">50 ml</option>
       <option value="custom">Custom</option>
     </select>
-    <input id="customQuantity" type="number" min="1" placeholder="Enter ml" style="display:none;">
+    <input id="customQuantity" 
+           type="number" 
+           min="1" 
+           inputmode="numeric" 
+           pattern="[0-9]*" 
+           placeholder="Enter ml" 
+           style="display:none;">
     <br>
     <button onclick="confirmSale()">Confirm Sale</button>
   </div>
@@ -150,16 +156,16 @@
       const saleData = { barcode: lastCode, volume: qty };
 
       try {
-        const response = await fetch("YOUR_GOOGLE_APPS_SCRIPT_URL", {
+        await fetch("https://script.google.com/macros/s/AKfycbwcXFTQY-pZMCWy8hN82XGqt8jouZv2K7hcXF3_21mASKX0YGX2wR33-9Ai834ErVVAzA/exec", {
           method: "POST",
+          mode: "no-cors",   // bypass CORS error
           body: JSON.stringify(saleData),
           headers: { "Content-Type": "application/json" }
         });
 
-        const result = await response.json();
         document.getElementById('result').textContent =
-          `✅ Sale saved: ${lastCode} | ${qty} ml`;
-        console.log("Saved:", result);
+          `✅ Sale sent: ${lastCode} | ${qty} ml (check sheet)`;
+        console.log("Sent:", saleData);
 
         // reset scanner for next item
         lastCode = null;
@@ -169,7 +175,7 @@
 
       } catch (err) {
         console.error("Error:", err);
-        alert("❌ Failed to save sale!");
+        alert("❌ Failed to send sale!");
         locked = false;
         Quagga.start();
       }
