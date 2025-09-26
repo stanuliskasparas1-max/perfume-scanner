@@ -152,7 +152,8 @@
       }
     });
 
-    function confirmSale() {
+    // Send data to Google Sheets
+    async function confirmSale() {
       if (!lastCode) {
         alert("No barcode scanned yet!");
         return;
@@ -161,13 +162,30 @@
       if (qty === 'custom') {
         qty = customQuantity.value || "0";
       }
-      const message = `Scanned Code: ${lastCode} | Quantity: ${qty} ml`;
-      document.getElementById('result').textContent = message;
-      console.log("Sale confirmed:", message);
 
-      // TODO: send this data to Google Sheets via Apps Script endpoint
+      const saleData = {
+        barcode: lastCode,
+        volume: qty
+      };
+
+      try {
+        const response = await fetch("YOUR_GOOGLE_APPS_SCRIPT_URL", {
+          method: "POST",
+          body: JSON.stringify(saleData),
+          headers: { "Content-Type": "application/json" }
+        });
+
+        const result = await response.json();
+        document.getElementById('result').textContent =
+          `✅ Sale saved: ${lastCode} | ${qty} ml`;
+        console.log("Saved:", result);
+      } catch (err) {
+        console.error("Error:", err);
+        alert("❌ Failed to save sale!");
+      }
     }
   </script>
 </body>
 </html>
+
 
