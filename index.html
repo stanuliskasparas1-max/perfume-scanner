@@ -104,61 +104,50 @@
     let lastCode = null;
     let locked = false;
 
+    // Show custom input if needed
     quantitySelect.addEventListener('change', () => {
-      if (quantitySelect.value === 'custom') {
-        customQuantity.style.display = 'inline-block';
-      } else {
-        customQuantity.style.display = 'none';
-      }
+      customQuantity.style.display = (quantitySelect.value === 'custom') ? 'inline-block' : 'none';
     });
 
+    // Init QuaggaJS
     Quagga.init({
       inputStream: {
         name: "Live",
         type: "LiveStream",
         target: document.querySelector('#interactive')
       },
-      decoder: {
-        readers: ["ean_reader", "code_128_reader"]
-      }
+      decoder: { readers: ["ean_reader", "code_128_reader"] }
     }, function(err) {
-      if (err) {
-        console.error(err);
-        return;
-      }
+      if (err) { console.error(err); return; }
       Quagga.start();
     });
 
+    // Lock after first detection
     Quagga.onDetected(function(result) {
       if (!locked) {
         lastCode = result.codeResult.code;
         scannerContainer.classList.add('active');
         locked = true;
+        Quagga.pause(); // freeze scanner
       }
     });
 
     Quagga.onProcessed(function(result) {
       if (!result || !result.codeResult) {
-        if (!locked) {
-          scannerContainer.classList.remove('active');
-        }
+        if (!locked) scannerContainer.classList.remove('active');
       }
     });
 
+    // Confirm sale
     async function confirmSale() {
       if (!lastCode) {
         alert("No barcode scanned yet!");
         return;
       }
       let qty = quantitySelect.value;
-      if (qty === 'custom') {
-        qty = customQuantity.value || "0";
-      }
+      if (qty === 'custom') qty = customQuantity.value || "0";
 
-      const saleData = {
-        barcode: lastCode,
-        volume: qty
-      };
+      const saleData = { barcode: lastCode, volume: qty };
 
       try {
         const response = await fetch("YOUR_GOOGLE_APPS_SCRIPT_URL", {
@@ -172,21 +161,21 @@
           `✅ Sale saved: ${lastCode} | ${qty} ml`;
         console.log("Saved:", result);
 
-        // reset
+        // reset scanner for next item
         lastCode = null;
         locked = false;
         scannerContainer.classList.remove('active');
+        Quagga.start();
 
       } catch (err) {
         console.error("Error:", err);
         alert("❌ Failed to save sale!");
         locked = false;
+        Quagga.start();
       }
     }
   </script>
 </body>
-</html>
-
 </html>
 
 
