@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Perfume Scanner</title>
+  <title>Perfume POS Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -14,16 +14,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
-    }
+    h1 { margin: 20px 0; font-size: 2rem; text-align: center; }
     .hidden { display: none; }
-    .menu button, #form-container button {
-      font-size: 1.5rem;
+    button {
+      font-size: 1.2rem;
       padding: 12px 20px;
       margin: 10px;
       border-radius: 12px;
@@ -31,181 +28,215 @@
       cursor: pointer;
       background: #00aaff;
       color: white;
-      transition: transform 0.2s, background 0.3s;
+      transition: background 0.3s, transform 0.2s;
     }
-    button:hover {
-      background: #0088cc;
-      transform: scale(1.05);
-    }
-    #scanner {
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-      border: none;
-    }
+    button:hover { background: #0088cc; transform: scale(1.05); }
+    #scanner { width: 100vw; height: 70vh; }
     #flash-effect {
-      position: absolute;
-      top: 0; left: 0;
+      position: absolute; top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,255,100,0.3);
+      background: rgba(0,255,100,0.5);
       display: none;
-      animation: flash 0.4s ease-out;
+      animation: flash 0.3s ease-out;
     }
-    @keyframes flash {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-    #form-container {
-      text-align: center;
-    }
+    @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
     select, input {
-      font-size: 1.5rem;
-      padding: 10px;
-      margin: 10px;
-      border-radius: 12px;
-      border: none;
-      outline: none;
-      width: 200px;
+      font-size: 1.2rem; padding: 10px; margin: 10px;
+      border-radius: 10px; border: none; outline: none;
     }
-    #result {
-      margin-top: 10px;
-      font-size: 1.2rem;
-      color: #00ffcc;
+    #sales-list { width: 90%; max-width: 600px; margin-top: 20px; }
+    .sale-item { padding: 6px; border-bottom: 1px solid #444; }
+    .ok { color: #00ff99; }
+    .retry { color: #ffaa00; }
+    .fail { color: #ff4444; }
+    #totals { margin-top: 15px; font-weight: bold; }
+    #popup {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #ff4444; color: white; padding: 12px 20px; border-radius: 10px;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <!-- Menu screen -->
-  <div id="menu" class="menu">
-    <h1>Perfume Scanner</h1>
+  <!-- Menu -->
+  <div id="menu">
+    <h1>Perfume POS</h1>
     <button onclick="showScanner()">Start Reading</button>
+    <button onclick="showSales()">Today’s Sales</button>
     <button onclick="showSettings()">Settings</button>
   </div>
 
-  <!-- Settings screen -->
+  <!-- Settings -->
   <div id="settings" class="hidden">
     <h1>Settings</h1>
     <p>Version: <span id="version">v1.0.0</span></p>
     <button onclick="backToMenu()">Back</button>
   </div>
 
-  <!-- Scanner screen -->
-  <div id="scanner-container" class="hidden">
-    <div id="scanner"></div>
-    <div id="flash-effect"></div>
+  <!-- Scanner -->
+  <div id="scanner-screen" class="hidden">
+    <div style="position:relative;width:100vw;height:70vh;">
+      <div id="scanner"></div>
+      <div id="flash-effect"></div>
+    </div>
+    <div id="form-container" class="hidden">
+      <label for="quantity">Quantity:</label>
+      <select id="quantity">
+        <option value="30">30 ml</option>
+        <option value="40">40 ml</option>
+        <option value="50">50 ml</option>
+        <option value="custom">Custom</option>
+      </select>
+      <input id="customQuantity" type="number" min="1"
+             inputmode="numeric" pattern="[0-9]*"
+             placeholder="Enter ml" style="display:none;">
+      <br>
+      <button onclick="confirmSale()">Send</button>
+    </div>
   </div>
 
-  <!-- Form screen -->
-  <div id="form-container" class="hidden">
-    <label for="quantity">Quantity:</label>
-    <select id="quantity">
-      <option value="30">30 ml</option>
-      <option value="40">40 ml</option>
-      <option value="50">50 ml</option>
-      <option value="custom">Custom</option>
-    </select>
-    <input id="customQuantity" 
-           type="number" 
-           min="1" 
-           inputmode="numeric" 
-           pattern="[0-9]*" 
-           placeholder="Enter ml" 
-           style="display:none;">
-    <br>
-    <button onclick="confirmSale()">Send</button>
-    <div id="result"></div>
+  <!-- Sales Summary -->
+  <div id="sales-screen" class="hidden">
+    <h1>Today’s Sales</h1>
+    <div id="sales-list"></div>
+    <div id="totals"></div>
+    <button onclick="backToMenu()">Back</button>
   </div>
 
-  <!-- html5-qrcode library -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- Popup -->
+  <div id="popup"></div>
+
+  <!-- html5-qrcode -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     const menu = document.getElementById("menu");
     const settings = document.getElementById("settings");
-    const scannerContainer = document.getElementById("scanner-container");
+    const scannerScreen = document.getElementById("scanner-screen");
+    const salesScreen = document.getElementById("sales-screen");
     const formContainer = document.getElementById("form-container");
     const scannerDiv = document.getElementById("scanner");
     const flashEffect = document.getElementById("flash-effect");
     const quantitySelect = document.getElementById("quantity");
     const customQuantity = document.getElementById("customQuantity");
-    const resultDiv = document.getElementById("result");
+    const salesList = document.getElementById("sales-list");
+    const totalsDiv = document.getElementById("totals");
+    const popup = document.getElementById("popup");
 
-    let lastCode = null;
-    let html5QrCode;
+    let html5QrCode, lastCode = null;
+    let sales = JSON.parse(localStorage.getItem("sales")) || [];
     const APP_VERSION = "v1.0.0";
-
     document.getElementById("version").textContent = APP_VERSION;
 
-    quantitySelect.addEventListener('change', () => {
-      customQuantity.style.display = (quantitySelect.value === 'custom') ? 'inline-block' : 'none';
-    });
-
-    function showScanner() {
-      menu.classList.add("hidden");
-      settings.classList.add("hidden");
-      formContainer.classList.add("hidden");
-      scannerContainer.classList.remove("hidden");
-      startScanner();
+    // Reset daily
+    const today = new Date().toDateString();
+    if (localStorage.getItem("salesDate") !== today) {
+      sales = []; localStorage.setItem("salesDate", today);
+      localStorage.setItem("sales", JSON.stringify(sales));
     }
 
-    function showSettings() {
-      menu.classList.add("hidden");
-      settings.classList.remove("hidden");
-    }
+    // UI navigation
+    function showScanner() { menu.classList.add("hidden"); settings.classList.add("hidden"); salesScreen.classList.add("hidden"); scannerScreen.classList.remove("hidden"); startScanner(); }
+    function showSettings() { menu.classList.add("hidden"); settings.classList.remove("hidden"); }
+    function showSales() { menu.classList.add("hidden"); salesScreen.classList.remove("hidden"); renderSales(); }
+    function backToMenu() { settings.classList.add("hidden"); scannerScreen.classList.add("hidden"); salesScreen.classList.add("hidden"); menu.classList.remove("hidden"); stopScanner(); }
 
-    function backToMenu() {
-      settings.classList.add("hidden");
-      menu.classList.remove("hidden");
-    }
-
+    // Scanner
     function startScanner() {
       html5QrCode = new Html5Qrcode("scanner");
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 20, qrbox: { width: 300, height: 200 } },
+      html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 300, height: 200 } },
         code => {
           if (!lastCode) {
             lastCode = code;
+            playBeep();
             flashEffect.style.display = "block";
-            setTimeout(() => flashEffect.style.display = "none", 400);
-            html5QrCode.stop().then(() => {
-              scannerContainer.classList.add("hidden");
-              formContainer.classList.remove("hidden");
-            });
+            setTimeout(() => flashEffect.style.display = "none", 300);
+            html5QrCode.stop().then(() => formContainer.classList.remove("hidden"));
           }
-        },
-        err => {}
+        }
       ).catch(err => console.error("Scanner error:", err));
     }
+    function stopScanner() { if (html5QrCode) html5QrCode.stop().catch(() => {}); }
 
-    async function confirmSale() {
+    // Beep
+    function playBeep() {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      osc.type = "sine"; osc.frequency.setValueAtTime(1000, ctx.currentTime);
+      osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.1);
+    }
+
+    // Confirm sale
+    function confirmSale() {
       let qty = quantitySelect.value;
-      if (qty === 'custom') qty = customQuantity.value || "0";
-
-      const saleData = { barcode: lastCode, volume: qty };
-
-      try {
-        await fetch("https://script.google.com/macros/s/AKfycbwcXFTQY-pZMCWy8hN82XGqt8jouZv2K7hcXF3_21mASKX0YGX2wR33-9Ai834ErVVAzA/exec", {
-          method: "POST",
-          mode: "no-cors",
-          body: JSON.stringify(saleData),
-          headers: { "Content-Type": "application/json" }
-        });
-        resultDiv.textContent = `✅ Sent: ${lastCode} | ${qty} ml`;
-      } catch (err) {
-        resultDiv.textContent = "❌ Failed to send!";
-      }
-
-      // Reset for next scan
+      if (qty === "custom") qty = customQuantity.value || "0";
+      const sale = {
+        time: new Date().toLocaleTimeString(),
+        barcode: lastCode,
+        volume: qty,
+        status: "pending",
+        retries: 0
+      };
+      sales.push(sale);
+      localStorage.setItem("sales", JSON.stringify(sales));
+      uploadSale(sale);
       lastCode = null;
-      setTimeout(() => {
-        formContainer.classList.add("hidden");
-        resultDiv.textContent = "";
-        scannerContainer.classList.remove("hidden");
-        startScanner();
-      }, 800);
+      formContainer.classList.add("hidden");
+      startScanner();
+    }
+
+    // Upload sale
+    function uploadSale(sale) {
+      fetch("https://script.google.com/macros/s/AKfycbwcXFTQY-pZMCWy8hN82XGqt8jouZv2K7hcXF3_21mASKX0YGX2wR33-9Ai834ErVVAzA/exec", {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({ barcode: sale.barcode, volume: sale.volume }),
+        headers: { "Content-Type": "application/json" }
+      }).then(() => {
+        sale.status = "ok";
+        localStorage.setItem("sales", JSON.stringify(sales));
+      }).catch(() => retrySale(sale));
+    }
+
+    // Retry
+    function retrySale(sale) {
+      if (sale.retries < 3) {
+        sale.status = "retry"; sale.retries++;
+        setTimeout(() => uploadSale(sale), 30000);
+      } else {
+        sale.status = "fail";
+        showPopup(`❌ Upload failed: ${sale.barcode} | ${sale.volume} ml`);
+      }
+      localStorage.setItem("sales", JSON.stringify(sales));
+    }
+
+    // Render sales summary
+    function renderSales() {
+      salesList.innerHTML = "";
+      let total = 0, count = 0;
+      sales.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "sale-item " + (s.status === "ok" ? "ok" : s.status === "retry" ? "retry" : "fail");
+        div.textContent = `${s.time} | ${s.barcode} | ${s.volume} ml ${statusText(s)}`;
+        salesList.appendChild(div);
+        total += parseInt(s.volume) || 0; count++;
+      });
+      totalsDiv.textContent = `Total Sales: ${count} | Total Volume: ${total} ml`;
+    }
+    function statusText(s) {
+      if (s.status === "ok") return "✅";
+      if (s.status === "retry") return `⚠️ retry ${s.retries}/3`;
+      if (s.status === "fail") return "❌ failed";
+      return "";
+    }
+
+    // Popup
+    function showPopup(msg) {
+      popup.textContent = msg; popup.style.display = "block";
+      setTimeout(() => popup.style.display = "none", 4000);
     }
   </script>
 </body>
 </html>
+
 
 
