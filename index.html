@@ -13,35 +13,30 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 10px;
     }
     h1 {
       margin: 10px 0;
       font-size: 2rem;
       text-align: center;
     }
-    #scanner-container {
-      position: relative;
+    #scanner {
       width: 95vw;
+      max-width: 500px;
       height: 60vh;
       border: 6px solid red;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
-      transition: border-color 0.3s, box-shadow 0.3s;
+      margin-bottom: 20px;
     }
-    #scanner-container.active {
+    #scanner.active {
       border-color: #00ff66;
       box-shadow: 0 0 35px rgba(0, 255, 100, 0.7);
     }
-    #interactive {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
     #form-container {
-      margin-top: 20px;
       text-align: center;
     }
     select, input, button {
@@ -76,9 +71,7 @@
 <body>
   <h1>Perfume Scanner</h1>
 
-  <div id="scanner-container">
-    <div id="interactive" class="viewport"></div>
-  </div>
+  <div id="scanner"></div>
 
   <div id="form-container">
     <label for="quantity">Quantity:</label>
@@ -101,48 +94,43 @@
 
   <div id="result"></div>
 
-  <!-- QuaggaJS library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <!-- html5-qrcode library -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
-    const scannerContainer = document.getElementById('scanner-container');
-    const quantitySelect = document.getElementById('quantity');
-    const customQuantity = document.getElementById('customQuantity');
+    const scannerDiv = document.getElementById("scanner");
+    const quantitySelect = document.getElementById("quantity");
+    const customQuantity = document.getElementById("customQuantity");
+    const resultDiv = document.getElementById("result");
+
     let lastCode = null;
-    let locked = false;
+    let html5QrCode;
 
     // Show custom input if needed
     quantitySelect.addEventListener('change', () => {
       customQuantity.style.display = (quantitySelect.value === 'custom') ? 'inline-block' : 'none';
     });
 
-    // Init QuaggaJS
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector('#interactive')
-      },
-      decoder: { readers: ["ean_reader", "code_128_reader"] }
-    }, function(err) {
-      if (err) { console.error(err); return; }
-      Quagga.start();
-    });
-
-    // Lock after first detection
-    Quagga.onDetected(function(result) {
-      if (!locked) {
-        lastCode = result.codeResult.code;
-        scannerContainer.classList.add('active');
-        locked = true;
-        Quagga.pause(); // freeze scanner
-      }
-    });
-
-    Quagga.onProcessed(function(result) {
-      if (!result || !result.codeResult) {
-        if (!locked) scannerContainer.classList.remove('active');
-      }
-    });
+    // Start scanner
+    function startScanner() {
+      html5QrCode = new Html5Qrcode("scanner");
+      html5QrCode.start(
+        { facingMode: "environment" }, // back camera
+        {
+          fps: 15,
+          qrbox: { width: 300, height: 200 }
+        },
+        code => {
+          if (!lastCode) {
+            lastCode = code;
+            scannerDiv.classList.add("active");
+            html5QrCode.stop(); // freeze camera
+          }
+        },
+        errorMessage => {
+          // console.log("Scanning error:", errorMessage);
+        }
+      ).catch(err => console.error("Scanner start error:", err));
+    }
 
     // Confirm sale
     async function confirmSale() {
@@ -156,32 +144,34 @@
       const saleData = { barcode: lastCode, volume: qty };
 
       try {
+        // Send to Google Sheets
         await fetch("https://script.google.com/macros/s/AKfycbwcXFTQY-pZMCWy8hN82XGqt8jouZv2K7hcXF3_21mASKX0YGX2wR33-9Ai834ErVVAzA/exec", {
           method: "POST",
-          mode: "no-cors",   // bypass CORS error
+          mode: "no-cors", // bypass CORS
           body: JSON.stringify(saleData),
           headers: { "Content-Type": "application/json" }
         });
 
-        document.getElementById('result').textContent =
-          `✅ Sale sent: ${lastCode} | ${qty} ml (check sheet)`;
+        resultDiv.textContent = `✅ Sent: ${lastCode} | ${qty} ml (check sheet)`;
         console.log("Sent:", saleData);
-
-        // reset scanner for next item
-        lastCode = null;
-        locked = false;
-        scannerContainer.classList.remove('active');
-        Quagga.start();
 
       } catch (err) {
         console.error("Error:", err);
         alert("❌ Failed to send sale!");
-        locked = false;
-        Quagga.start();
       }
+
+      // Reset for next scan immediately
+      lastCode = null;
+      scannerDiv.classList.remove("active");
+      startScanner(); // restart camera
     }
+
+    // Start first scan
+    startScanner();
   </script>
 </body>
+</html>
+
 </html>
 
 
