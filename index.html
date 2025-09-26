@@ -1,29 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Perfume Scanner</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="script.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    #reader { width: 300px; margin: auto; }
-    select, button { margin-top: 10px; padding: 10px; font-size: 16px; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      margin: 10px 0;
+      font-size: 2rem;
+      text-align: center;
+    }
+
+    #scanner-container {
+      position: relative;
+      width: 95vw;
+      height: 60vh;
+      border: 6px solid red;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    #scanner-container.active {
+      border-color: #00ff66;
+      box-shadow: 0 0 35px rgba(0, 255, 100, 0.7);
+    }
+
+    #interactive {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #form-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    select, input, button {
+      font-size: 1.5rem;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+    }
+
+    select, input {
+      width: 180px;
+    }
+
+    button {
+      background: #00aaff;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background: #0088cc;
+      transform: scale(1.05);
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.4rem;
+      text-align: center;
+      color: #00ffcc;
+    }
   </style>
 </head>
 <body>
-  <h2>Perfume Sale Scanner</h2>
-  <div id="reader"></div>
-  <p id="result"></p>
-  
-  <label for="ml">Choose volume:</label>
-  <select id="ml">
-    <option value="30">30 ml</option>
-    <option value="40">40 ml</option>
-    <option value="50">50 ml</option>
-    <option value="Custom">Custom</option>
-  </select><br>
+  <h1>Perfume Scanner</h1>
 
-  <button onclick="confirmSale()">Confirm Sale</button>
+  <div id="scanner-container">
+    <div id="interactive" class="viewport"></div>
+  </div>
+
+  <div id="form-container">
+    <label for="quantity">Quantity:</label>
+    <select id="quantity">
+      <option value="30">30 ml</option>
+      <option value="40">40 ml</option>
+      <option value="50">50 ml</option>
+      <option value="custom">Custom</option>
+    </select>
+    <input id="customQuantity" type="number" min="1" placeholder="Enter ml" style="display:none;">
+    <br>
+    <button onclick="confirmSale()">Confirm Sale</button>
+  </div>
+
+  <div id="result"></div>
+
+  <!-- QuaggaJS library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <script>
+    const scannerContainer = document.getElementById('scanner-container');
+    const quantitySelect = document.getElementById('quantity');
+    const customQuantity = document.getElementById('customQuantity');
+    let lastCode = null;
+
+    // Show custom quantity input if selected
+    quantitySelect.addEventListener('change', () => {
+      if (quantitySelect.value === 'custom') {
+        customQuantity.style.display = 'inline-block';
+      } else {
+        customQuantity.style.display = 'none';
+      }
+    });
+
+    // Initialize QuaggaJS
+    Quagga.init({
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: document.querySelector('#interactive')
+      },
+      decoder: {
+        readers: ["ean_reader", "code_128_reader"]
+      }
+    }, function(err) {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      Quagga.start();
+    });
+
+    // Detect barcodes
+    Quagga.onDetected(function(result) {
+      lastCode = result.codeResult.code;
+      scannerContainer.classList.add('active');
+    });
+
+    Quagga.onProcessed(function(result) {
+      if (!result || !result.codeResult) {
+        scannerContainer.classList.remove('active');
+      }
+    });
+
+    function confirmSale() {
+      if (!lastCode) {
+        alert("No barcode scanned yet!");
+        return;
+      }
+      let qty = quantitySelect.value;
+      if (qty === 'custom') {
+        qty = customQuantity.value || "0";
+      }
+      const message = `Scanned Code: ${lastCode} | Quantity: ${qty} ml`;
+      document.getElementById('result').textContent = message;
+      console.log("Sale confirmed:", message);
+
+      // TODO: send this data to Google Sheets via Apps Script endpoint
+    }
+  </script>
 </body>
 </html>
+
