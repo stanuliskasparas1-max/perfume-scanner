@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Store POS (Web)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- force fresh -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -12,7 +11,6 @@
     :root{
       --bg:#0f1012;--card:#17181c;--txt:#fff;--muted:#b6bdc6;
       --pri:#00aaff;--pri2:#0088cc;--ok:#00ff99;--warn:#ffcc00;--err:#ff5050;
-      --accent:#1f6feb;
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
@@ -23,22 +21,19 @@
     .btn-ghost{background:#2a2f36}
     .btn-danger{background:#c83532}
     .card{width:92vw;max-width:760px;background:var(--card);padding:16px;border-radius:16px;box-shadow:0 0 24px rgba(0,0,0,.35);margin:12px 0}
-    .grid{display:grid;gap:10px}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .row>*{flex:1}
     label{font-weight:600}
     input,select{width:100%;padding:12px;border:none;border-radius:10px;margin:6px 0;font-size:1.05rem;background:#20242b;color:#fff}
-    .topbar{position:fixed;top:10px;right:10px;z-index:50;display:flex;gap:8px}
-    .topbar .btn{padding:8px 12px;font-size:.95rem}
     .tag{display:inline-block;background:#232833;border:1px solid #2e3440;border-radius:10px;padding:5px 8px;margin:3px;font-size:.95rem;color:var(--muted)}
     .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
     #scannerWrap{position:relative;width:100vw;height:72vh;max-height:74vh}
     #scanner{width:100%;height:100%}
     #flash{position:absolute;inset:0;background:rgba(0,255,100,.35);display:none;animation:flash .25s ease-out;pointer-events:none}
     #scanBadge{
-      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
       background:rgba(15,16,18,.85);border:2px solid #00ffaa;box-shadow:0 0 30px rgba(0,255,170,.45);
-      padding:10px 16px;border-radius:999px;font-weight:700;letter-spacing:.6px;display:none
+      padding:10px 16px;border-radius:999px;font-weight:700;display:none
     }
     @keyframes flash{from{opacity:1}to{opacity:0}}
     #popup{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#2c313a;padding:10px 16px;border-radius:10px;display:none;border:1px solid #3a404c}
@@ -47,23 +42,18 @@
     .chip:hover{background:#2a3040}
     .muted{opacity:.85;color:var(--muted)}
     .spacer{height:12px}
-    code.small{font-size:.9rem;color:#aab2bd}
     .divider{height:1px;background:#242932;margin:10px 0}
   </style>
 </head>
 <body>
-  <!-- Top bar -->
-  <div class="topbar hidden" id="topbar">
-    <button class="btn btn-ghost" id="btnBack" onclick="goHome()">Grįžti</button>
-    <button class="btn btn-ghost" onclick="syncNow()">Sync now</button>
-    <button class="btn btn-danger" onclick="logout()">Atsijungti</button>
-  </div>
-
   <!-- Login -->
   <div id="login" class="card">
     <h1>Prisijungimas</h1>
     <input id="loginCode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Įveskite vartotojo kodą" />
-    <button class="btn" onclick="doLogin()">Prisijungti</button>
+    <div class="row">
+      <button class="btn" onclick="doLogin()">Prisijungti</button>
+    </div>
+    <div class="muted">Versija: <span id="ver">v2.4.0</span></div>
   </div>
 
   <!-- Home -->
@@ -72,15 +62,21 @@
     <div id="who" class="muted"></div>
     <div id="menuButtons" class="row" style="margin-top:8px"></div>
     <div class="divider"></div>
-    <div class="muted">Versija: <span id="ver">v2.3.0</span></div>
+    <div class="row">
+      <button class="btn btn-ghost" onclick="syncNow()">Sync now</button>
+      <button class="btn btn-danger" onclick="logout()">Atsijungti</button>
+    </div>
   </div>
 
-  <!-- Shared scanner -->
+  <!-- Shared scanner (with local back) -->
   <div id="scannerScreen" class="hidden">
     <div id="scannerWrap">
       <div id="scanner"></div>
       <div id="flash"></div>
       <div id="scanBadge">SCANNED</div>
+    </div>
+    <div class="row" style="padding:8px 12px;max-width:760px;width:92vw">
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
     </div>
   </div>
 
@@ -102,7 +98,11 @@
         </div>
       </div>
     </div>
-    <button class="btn" onclick="confirmSale()">ENTER</button>
+    <div class="row">
+      <button class="btn" onclick="confirmSale()">ENTER</button>
+      <button class="btn btn-ghost" onclick="scanAgain()">Skenuoti vėl</button>
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+    </div>
   </div>
 
   <!-- IN EXISTING -->
@@ -111,7 +111,11 @@
     <div id="inInfo" class="muted"></div>
     <label>Gautas kiekis</label>
     <input id="inQty" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Kiekis" />
-    <button class="btn" onclick="confirmIn()">Įrašyti</button>
+    <div class="row">
+      <button class="btn" onclick="confirmIn()">Įrašyti</button>
+      <button class="btn btn-ghost" onclick="scanAgain()">Skenuoti vėl</button>
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+    </div>
   </div>
 
   <!-- IN NEW -->
@@ -129,15 +133,21 @@
     <input id="newPrice" type="tel" inputmode="decimal" placeholder="0,00" />
     <label>Gautas kiekis</label>
     <input id="newQty" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Kiekis" />
-    <button class="btn" onclick="saveNewAndIn()">Išsaugoti ir įrašyti</button>
+    <div class="row">
+      <button class="btn" onclick="saveNewAndIn()">Išsaugoti ir įrašyti</button>
+      <button class="btn btn-ghost" onclick="scanAgain()">Skenuoti vėl</button>
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+    </div>
   </div>
 
   <!-- CHECK STOCK -->
   <div id="chkPanel" class="card hidden">
     <h2>Tikrinti likutį</h2>
     <div id="chkInfo" class="muted"></div>
-    <div class="spacer"></div>
-    <button class="btn" onclick="scanAgain()">Skenuoti vėl</button>
+    <div class="row">
+      <button class="btn" onclick="scanAgain()">Skenuoti vėl</button>
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+    </div>
   </div>
 
   <!-- GLOBAL PRICE (222) -->
@@ -146,7 +156,11 @@
     <div id="priceInfo" class="muted"></div>
     <label>Nauja kaina / vienetui</label>
     <input id="priceNew" type="tel" inputmode="decimal" placeholder="0,00" />
-    <button class="btn" onclick="confirmGlobalPrice()">Patvirtinti kainą</button>
+    <div class="row">
+      <button class="btn" onclick="confirmGlobalPrice()">Patvirtinti kainą</button>
+      <button class="btn btn-ghost" onclick="scanAgain()">Skenuoti vėl</button>
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+    </div>
   </div>
 
   <!-- INVENTORY (333) -->
@@ -154,7 +168,10 @@
     <h2>Inventorizacija</h2>
     <label>Inventorizacijos data</label>
     <input id="invDate" type="date" />
-    <button class="btn" onclick="startInventory()">Pradėti inventorizaciją</button>
+    <div class="row">
+      <button class="btn" onclick="startInventory()">Pradėti inventorizaciją</button>
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+    </div>
   </div>
 
   <div id="invCount" class="card hidden">
@@ -162,43 +179,23 @@
     <div id="invInfo" class="muted"></div>
     <label>Naujas suskaičiuotas kiekis</label>
     <input id="invQty" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Kiekis" />
-    <button class="btn" onclick="confirmInvCount()">Įrašyti ir kitas</button>
+    <div class="row">
+      <button class="btn" onclick="confirmInvCount()">Įrašyti ir kitas</button>
+      <button class="btn btn-ghost" onclick="scanAgain()">Skenuoti vėl</button>
+      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+    </div>
   </div>
 
-  <div id="invClose" class="card hidden">
-    <h2>Uždaryti inventorizaciją</h2>
-    <button class="btn" onclick="closeInventory()">Uždaryti</button>
-  </div>
-
-  <!-- SETTINGS (444 only) -->
+  <!-- SETTINGS (444 only, supaprastinta) -->
   <div id="settings" class="card hidden">
     <h2>Nustatymai (IT)</h2>
     <div id="invStatus" class="muted">Būsena: —</div>
     <div class="divider"></div>
-    <h3>IN/OUT šaltiniai</h3>
-    <div class="grid">
-      <div>
-        <label>IN sheet ID</label>
-        <input id="inId" placeholder="1abc... (Google Sheet ID)" />
-      </div>
-      <div>
-        <label>OUT sheet ID</label>
-        <input id="outId" placeholder="1xyz... (Google Sheet ID)" />
-      </div>
-    </div>
-    <div class="row">
-      <button class="btn" onclick="setSources()">Išsaugoti šaltinius</button>
-      <button class="btn btn-ghost" onclick="refreshConfig()">Atnaujinti būseną</button>
-    </div>
-    <div class="divider"></div>
-    <h3>Likučių režimas</h3>
     <div class="row">
       <button class="btn btn-ghost" onclick="syncNow()">Sync now</button>
-      <button class="btn" onclick="switchToNormal()">Grąžinti į normalų (IN−OUT)</button>
+      <button class="btn" onclick="closeInventory()">Uždaryti inventorizaciją</button>
+      <button class="btn btn-danger" onclick="logout()">Atsijungti</button>
     </div>
-    <p class="muted"><small>Pastaba: inventorizaciją taip pat gali uždaryti 333 vartotojas per savo ekraną.</small></p>
-    <div class="divider"></div>
-    <div class="muted">Versija: <code class="small" id="ver2">v2.3.0</code></div>
   </div>
 
   <div id="popup"></div>
@@ -210,32 +207,28 @@
     const IN_URL  = "https://script.google.com/macros/s/AKfycbztiJK4J-wqvPnYYI_MPnXVxEMVrUwf8s6G35NvXq8Q4-Q_eosz5NzOwkaieoLhycFv/exec";
     const INV_URL = "https://script.google.com/macros/s/AKfycbx8lt1QANX-cXF1WyNx9fon7Ei6G4qWksnpW9cu-qlnr1DhWp-_h39vx8PdMM-oQHUGhQ/exec";
     const RETRY_MS = 30000, MAX_RETRIES = 3;
-    const APP_VERSION = "v2.3.0";
+    const APP_VERSION = "v2.4.0";
 
     /* ===== STATE ===== */
     let currentUser = null; // {id, role}
     let html5Qr = null, lastEAN = null, currentRoute = null;
-    // local "products" from IN events (by EAN): { name, unit, price }
+    // local products { EAN: {name, unit, price} }
     let products = JSON.parse(localStorage.getItem("products_cache")||"{}");
-    // stock map from backend: { EAN: qty }, plus flags
-    let stockMap = {}, stockSource = "computed", inventoryActive = false;
+    // stock from backend
+    let stockMap = {}, inventoryActive = false;
 
-    // resend buffer (safe due to EventId duplicate guard)
-    let queue = JSON.parse(localStorage.getItem("send_queue")||"[]"); // [{url,payload,ts}]
+    // resend buffer
+    let queue = JSON.parse(localStorage.getItem("send_queue")||"[]");
     function saveQueue(){ localStorage.setItem("send_queue", JSON.stringify(queue.slice(-200))); }
     function enqueue(url,payload){ queue.push({url, payload, ts:Date.now()}); saveQueue(); }
 
-    /* ===== UI REFS ===== */
-    const topbar = document.getElementById("topbar");
-    const btnBack = document.getElementById("btnBack");
-
+    /* ===== UI refs ===== */
     const login = document.getElementById("login");
     const loginCode = document.getElementById("loginCode");
     const home = document.getElementById("home");
     const who = document.getElementById("who");
     const menuButtons = document.getElementById("menuButtons");
     document.getElementById("ver").textContent = APP_VERSION;
-    document.getElementById("ver2").textContent = APP_VERSION;
 
     const scannerScreen = document.getElementById("scannerScreen");
     const flash = document.getElementById("flash");
@@ -268,54 +261,37 @@
 
     const invStart = document.getElementById("invStart");
     const invCount = document.getElementById("invCount");
-    const invClose = document.getElementById("invClose");
     const invDate = document.getElementById("invDate");
     const invInfo = document.getElementById("invInfo");
     const invQty = document.getElementById("invQty");
 
     const settings = document.getElementById("settings");
     const invStatus = document.getElementById("invStatus");
-    const inId = document.getElementById("inId");
-    const outId = document.getElementById("outId");
 
     /* ===== UTIL ===== */
     function show(el){ el.classList.remove("hidden"); }
     function hide(el){ el.classList.add("hidden"); }
     function popup(msg){
-      const p = document.getElementById("popup");
-      p.textContent = msg; p.style.display="block";
+      const p=document.getElementById("popup");
+      p.textContent=msg; p.style.display="block";
       setTimeout(()=>p.style.display="none", 2800);
     }
     function vibrate(ms=45){ if (navigator.vibrate) try{ navigator.vibrate(ms);}catch{} }
-    // Audio: create once after first user gesture
     let beepCtx=null;
-    function initAudio(){
-      if (beepCtx) return;
-      try{ beepCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch{}
-    }
+    function initAudio(){ if (beepCtx) return; try{ beepCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch{} }
     function beep(){
       if (!beepCtx) return;
-      try{
-        const osc = beepCtx.createOscillator();
-        const gain = beepCtx.createGain();
-        osc.type="square"; osc.frequency.setValueAtTime(1100, beepCtx.currentTime);
-        gain.gain.value=.06; osc.connect(gain).connect(beepCtx.destination);
-        osc.start(); osc.stop(beepCtx.currentTime+.08);
+      try{ const o=beepCtx.createOscillator(), g=beepCtx.createGain();
+        o.type="square"; o.frequency.setValueAtTime(1100, beepCtx.currentTime);
+        g.gain.value=.07; o.connect(g).connect(beepCtx.destination); o.start(); o.stop(beepCtx.currentTime+.08);
       }catch{}
     }
-    function flashFX(){
-      flash.style.display="block"; scanBadge.style.display="block";
-      setTimeout(()=>{ flash.style.display="none"; scanBadge.style.display="none"; }, 320);
-    }
-    function parseCommaNumber(x){
-      if (typeof x==="number") return x;
-      if (!x) return 0;
-      return Number(String(x).trim().replace(",", "."));
-    }
-    function formatEUR(n){ const v = Number(n||0); return v.toFixed(2).replace(".", ",") + " €"; }
+    function flashFX(){ flash.style.display="block"; scanBadge.style.display="block"; setTimeout(()=>{flash.style.display="none"; scanBadge.style.display="none";}, 320); }
+    function parseCommaNumber(x){ if (typeof x==="number") return x; if (!x) return 0; return Number(String(x).trim().replace(",", ".")); }
+    function formatEUR(n){ const v=Number(n||0); return v.toFixed(2).replace(".", ",")+" €"; }
     function saveProducts(){ localStorage.setItem("products_cache", JSON.stringify(products)); }
 
-    /* ===== LOGIN / LOGOUT ===== */
+    /* ===== LOGIN ===== */
     function roleByCode(code){
       if (code==="111") return "Pardavėja";
       if (code==="222") return "Savininkas";
@@ -324,20 +300,19 @@
       return null;
     }
     function doLogin(){
-      initAudio(); // enable beep on iOS after user gesture
-      const code = (loginCode.value||"").trim();
-      const role = roleByCode(code);
+      initAudio();
+      const code=(loginCode.value||"").trim();
+      const role=roleByCode(code);
       if (!role){ popup("Neteisingas kodas"); return; }
-      currentUser = { id: code, role };
+      currentUser={id:code, role};
       loginCode.value="";
       showHome();
-      syncNow(); // first quick sync on login
+      syncNow(); // pirmas sync
     }
     function logout(){
       stopScanner();
-      currentUser = null;
-      hide(topbar);
-      [home, scannerScreen, sellPanel, inPanel, inNewPanel, chkPanel, pricePanel, invStart, invCount, invClose, settings].forEach(hide);
+      currentUser=null;
+      [home,scannerScreen,sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invStart,invCount,settings].forEach(hide);
       show(login);
     }
 
@@ -345,45 +320,39 @@
     function showHome(){
       hide(login);
       show(home);
-      who.textContent = `Prisijungęs: ${currentUser.role}`;
+      who.textContent=`Prisijungęs: ${currentUser.role}`;
       buildMenu();
-      hide(scannerScreen); hide(sellPanel); hide(inPanel); hide(inNewPanel); hide(chkPanel); hide(pricePanel);
-      hide(invStart); hide(invCount); hide(invClose); hide(settings);
-      hide(topbar);
+      // uždaryti viską
+      [scannerScreen,sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invStart,invCount,settings].forEach(hide);
     }
     function buildMenu(){
       menuButtons.innerHTML="";
-      const add = (txt, fn)=>{ const b=document.createElement("button"); b.className="btn"; b.textContent=txt; b.onclick=fn; menuButtons.appendChild(b); };
-      if (currentUser.id==="111"){ // Pardavėja
+      const add=(txt,fn)=>{ const b=document.createElement("button"); b.className="btn"; b.textContent=txt; b.onclick=fn; menuButtons.appendChild(b); };
+      if (currentUser.id==="111"){
         add("Parduoti", ()=>goRoute("sell"));
         add("Prekių priėmimas", ()=>goRoute("in"));
         add("Tikrinti likutį", ()=>goRoute("check"));
-      } else if (currentUser.id==="222"){ // Savininkas
+      } else if (currentUser.id==="222"){
         add("Parduoti", ()=>goRoute("sell"));
         add("Prekių priėmimas", ()=>goRoute("in"));
         add("Tikrinti likutį", ()=>goRoute("check"));
         add("Keisti kainą (globaliai)", ()=>goRoute("price"));
-      } else if (currentUser.id==="333"){ // Inventorizacija
+      } else if (currentUser.id==="333"){
         add("Inventorizacija", ()=>goRoute("inventory"));
-      } else if (currentUser.id==="444"){ // IT
+      } else if (currentUser.id==="444"){
         add("Nustatymai (IT)", ()=>goRoute("settings"));
       }
     }
 
     /* ===== ROUTING ===== */
     function goRoute(r){
-      currentRoute = r;
-      show(topbar);
+      currentRoute=r;
       hide(home);
-      if (r==="sell" || r==="in" || r==="check" || r==="price" || r==="inventory-scan"){
+      if (r==="sell"||r==="in"||r==="check"||r==="price"||r==="inventory-scan"){
         startScanner();
       }
-      if (r==="inventory"){
-        hide(scannerScreen); show(invStart); hide(invCount); show(invClose); // invClose visible for 333
-      }
-      if (r==="settings"){
-        hide(scannerScreen); show(settings); refreshConfig();
-      }
+      if (r==="inventory"){ hide(scannerScreen); show(invStart); hide(invCount); }
+      if (r==="settings"){ hide(scannerScreen); show(settings); refreshInvStatus(); }
     }
     function goHome(){
       stopScanner();
@@ -393,7 +362,7 @@
     /* ===== SCANNER ===== */
     function startScanner(){
       show(scannerScreen);
-      btnBack.disabled = false;
+      lastEAN=null;
       stopScanner();
       html5Qr = new Html5Qrcode("scanner");
       html5Qr.start({facingMode:"environment"},{
@@ -414,56 +383,49 @@
     function stopScanner(){ if (html5Qr){ try{ html5Qr.stop(); }catch{} } }
     function onScan(txt){
       if (lastEAN) return;
-      lastEAN = String(txt).trim();
+      lastEAN=String(txt).trim();
       vibrate(); beep(); flashFX();
-      html5Qr.stop().then(()=>handleEAN(lastEAN));
+      if (html5Qr){ html5Qr.stop().then(()=>handleEAN(lastEAN)).catch(()=>handleEAN(lastEAN)); }
+      else handleEAN(lastEAN);
     }
-    function scanAgain(){
-      hide(chkPanel); hide(pricePanel); hide(sellPanel); hide(inPanel); hide(inNewPanel); hide(invCount);
+    function restartScannerFlow(){
+      [sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invCount].forEach(hide);
       lastEAN=null; startScanner();
     }
+    function scanAgain(){ restartScannerFlow(); }
 
     /* ===== STOCK (JSONP) ===== */
     function jsonp(url, cb){ const s=document.createElement("script"); s.src=url+(url.includes("?")?"&":"?")+"callback="+cb+"&_="+Date.now(); document.body.appendChild(s); s.onload=()=>s.remove(); }
     function loadStock(){ jsonp(INV_URL+"?fn=stock","onStock"); }
-    window.onStock = function(payload){
-      if (!payload) return;
-      stockMap = payload.stock || {};
-      stockSource = payload.source || "computed";
-      inventoryActive = !!payload.active;
-      // Update status if settings open
-      invStatus.textContent = `Būsena: ${inventoryActive ? "Inventorizacija aktyvi (šaltinis: 3-ias sheetas)" : "Normalus režimas (IN−OUT)"}`;
+    window.onStock = function(p){
+      stockMap = (p && p.stock) || {};
+      inventoryActive = !!(p && p.active);
+      const txt = inventoryActive ? "Inventorizacija aktyvi (šaltinis: 3-ias sheetas)" : "Normalus režimas (IN−OUT)";
+      invStatus.textContent = "Būsena: " + txt;
     };
-    // periodic refresh
     setInterval(loadStock, 60000);
-    // first lazy refresh after login
-    function afterLoginRefresh(){ setTimeout(loadStock, 600); }
 
-    /* ===== PRODUCTS (local, from IN 'new product' events) ===== */
-    function setLocalProduct(ean, name, unit, price){ products[ean] = { name, unit, price: Number(price||0) }; saveProducts(); }
+    /* ===== PRODUCTS (local) ===== */
+    function setLocalProduct(ean,name,unit,price){ products[ean]={name,unit,price:Number(price||0)}; saveProducts(); }
 
-    /* ===== HANDLE EAN per route ===== */
+    /* ===== HANDLE by route ===== */
     function handleEAN(ean){
       if (currentRoute==="sell"){
-        const p = products[ean];
+        const p=products[ean];
         if (!p){
           hide(scannerScreen);
           sellInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag err">Nežinoma prekė — kreipkitės į administratorių</div>`;
-          hide(sellChips);
+          sellChips.classList.add("hidden");
           qtyInput.value=""; priceInput.value=""; priceInput.disabled=true;
           show(sellPanel); return;
         }
         prepareSellUI(ean,p);
-      }
-      else if (currentRoute==="in"){
-        const p = products[ean];
-        if (p) prepareInExisting(ean,p); else prepareInNew(ean);
-      }
-      else if (currentRoute==="check"){
+      } else if (currentRoute==="in"){
+        const p=products[ean]; if (p) prepareInExisting(ean,p); else prepareInNew(ean);
+      } else if (currentRoute==="check"){
         prepareCheckUI(ean, products[ean]||null);
-      }
-      else if (currentRoute==="price"){
-        const p = products[ean];
+      } else if (currentRoute==="price"){
+        const p=products[ean];
         hide(scannerScreen);
         if (!p){
           priceInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag err">Nežinoma prekė (pirmiausia priimkite IN režimu)</div>`;
@@ -477,23 +439,22 @@
         `;
         priceNew.value="";
         show(pricePanel);
-      }
-      else if (currentRoute==="inventory" || currentRoute==="inventory-scan"){
+      } else if (currentRoute==="inventory" || currentRoute==="inventory-scan"){
         handleEAN_inventory(ean);
       }
     }
 
     /* ===== SELL ===== */
-    function prepareSellUI(ean, p){
+    function prepareSellUI(ean,p){
       hide(scannerScreen);
-      const sysQty = stockMap[ean]; // could be undefined
+      const sysQty = stockMap[ean];
       sellInfo.innerHTML = `
         <div class="tag">EAN: ${ean}</div>
         <div class="tag">${p.name||"-"}</div>
         <div class="tag">Unit: ${p.unit||"-"}</div>
         <div class="tag">Kaina: ${formatEUR(p.price)}</div>
         <div class="tag">Likutis: ${sysQty===undefined?"—":sysQty}</div>
-        <div class="tag muted">Šaltinis: ${inventoryActive?"Inventorizacija":"IN−OUT"}</div>
+        <div class="tag muted">${inventoryActive?"Šaltinis: Inventorizacija":"Šaltinis: IN−OUT"}</div>
       `;
       qtyLabel.textContent = p.unit==="ml" ? "Kiek ml?" : "Kiek vnt?";
       qtyInput.value = p.unit==="ml" ? "" : "1";
@@ -507,30 +468,27 @@
           c.onclick=()=>{ qtyInput.value=v; };
           sellChips.appendChild(c);
         });
-        show(sellChips);
-      } else { hide(sellChips); }
-      show(sellPanel);
-      qtyInput.focus();
+        sellChips.classList.remove("hidden");
+      } else sellChips.classList.add("hidden");
+
+      show(sellPanel); qtyInput.focus();
     }
     function enableOverride(){ priceInput.disabled=false; priceInput.focus(); }
     function confirmSale(){
-      const ean = lastEAN; const p = products[ean];
+      const ean=lastEAN; const p=products[ean];
       if (!p){ popup("Nežinoma prekė"); return; }
-      const qty = parseInt((qtyInput.value||"0").replace(",",".").trim(),10);
+      const qty=parseInt((qtyInput.value||"0").replace(",",".").trim(),10);
       if (!(qty>0)){ popup("Įveskite kiekį"); return; }
-      const override = !priceInput.disabled;
-      let unitPrice = parseCommaNumber(priceInput.value);
-      if (!override) unitPrice = Number(p.price||0);
+      const override=!priceInput.disabled;
+      let unitPrice=parseCommaNumber(priceInput.value);
+      if (!override) unitPrice=Number(p.price||0);
 
-      const payload = {
+      const payload={
         "EAN": ean, "UnitName": p.name||"", "Qty": qty, "Unit": p.unit||"",
         "UnitPrice": unitPrice, "Override": override, "user_id": currentUser?.id||"",
-        "EventId": "sale_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
+        "EventId":"sale_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
       };
-      enqueue(OUT_URL, payload);
-      postNow(OUT_URL, payload);
-
-      // ready for next immediately
+      enqueue(OUT_URL,payload); postNow(OUT_URL,payload);
       restartScannerFlow();
     }
 
@@ -543,177 +501,130 @@
         <div class="tag">Unit: ${p.unit||"-"}</div>
         <div class="tag">Kaina: ${formatEUR(p.price)}</div>
       `;
-      inQty.value="";
-      show(inPanel); inQty.focus();
+      inQty.value=""; show(inPanel); inQty.focus();
     }
     function confirmIn(){
-      const ean = lastEAN; const p = products[ean];
-      const qty = parseInt((inQty.value||"0").replace(",",".").trim(),10);
+      const ean=lastEAN; const p=products[ean];
+      const qty=parseInt((inQty.value||"0").replace(",",".").trim(),10);
       if (!(qty>0)){ popup("Įveskite kiekį"); return; }
-      const payload = {
+      const payload={
         "EAN": ean, "UnitName": p?.name||"", "Qty": qty, "Unit": p?.unit||"",
         "Price": p?.price||0, "user_id": currentUser?.id||"",
         "EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
       };
-      enqueue(IN_URL, payload);
-      postNow(IN_URL, payload);
-
+      enqueue(IN_URL,payload); postNow(IN_URL,payload);
       restartScannerFlow();
     }
     function prepareInNew(ean){
       hide(scannerScreen); hide(inPanel);
-      newEAN.textContent = ean;
-      newName.value=""; newUnit.value="ml"; newPrice.value=""; newQty.value="";
+      newEAN.textContent=ean; newName.value=""; newUnit.value="ml"; newPrice.value=""; newQty.value="";
       show(inNewPanel); newName.focus();
     }
     function saveNewAndIn(){
-      const ean = lastEAN;
-      const name = (newName.value||"").trim();
-      const unit = newUnit.value;
-      const price = parseCommaNumber(newPrice.value);
-      const qty = parseInt((newQty.value||"0").replace(",",".").trim(),10);
+      const ean=lastEAN;
+      const name=(newName.value||"").trim();
+      const unit=newUnit.value;
+      const price=parseCommaNumber(newPrice.value);
+      const qty=parseInt((newQty.value||"0").replace(",",".").trim(),10);
       if (!name){ popup("Įveskite pavadinimą"); return; }
       if (!(qty>0)){ popup("Įveskite kiekį"); return; }
 
-      setLocalProduct(ean, name, unit, price);
-
-      const payload = {
-        "EAN": ean, "UnitName": name, "Qty": qty, "Unit": unit, "Price": price,
-        "user_id": currentUser?.id||"", "EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
+      setLocalProduct(ean,name,unit,price);
+      const payload={
+        "EAN": ean,"UnitName": name,"Qty": qty,"Unit": unit,"Price": price,
+        "user_id": currentUser?.id||"","EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
       };
-      enqueue(IN_URL, payload);
-      postNow(IN_URL, payload);
-
+      enqueue(IN_URL,payload); postNow(IN_URL,payload);
       restartScannerFlow();
     }
 
-    /* ===== CHECK STOCK ===== */
-    function prepareCheckUI(ean, p){
+    /* ===== CHECK ===== */
+    function prepareCheckUI(ean,p){
       hide(scannerScreen);
-      const nameTxt = p? (p.name||"—") : "—";
-      const unitTxt = p? (p.unit||"—") : "—";
-      const priceTxt = p? formatEUR(p.price) : "—";
-      const sysQty = stockMap[ean];
-      chkInfo.innerHTML = `
+      const nameTxt=p?(p.name||"—"):"—";
+      const unitTxt=p?(p.unit||"—"):"—";
+      const priceTxt=p?formatEUR(p.price):"—";
+      const sysQty=stockMap[ean];
+      chkInfo.innerHTML=`
         <div class="tag">EAN: ${ean}</div>
         <div class="tag">Pavadinimas: ${nameTxt}</div>
         <div class="tag">Unit: ${unitTxt}</div>
         <div class="tag">Kaina: ${priceTxt}</div>
         <div class="tag">Kiekis (sisteminiai): ${sysQty===undefined?"—":sysQty}</div>
-        <div class="tag muted">Šaltinis: ${inventoryActive?"Inventorizacija":"IN−OUT"}</div>
       `;
       show(chkPanel);
     }
 
     /* ===== GLOBAL PRICE (222) ===== */
     function confirmGlobalPrice(){
-      const ean = lastEAN; const p = products[ean];
+      const ean=lastEAN; const p=products[ean];
       if (!p){ popup("Nežinoma prekė"); return; }
-      const price = parseCommaNumber(priceNew.value);
+      const price=parseCommaNumber(priceNew.value);
       if (!(price>=0)){ popup("Įveskite kainą"); return; }
-      const payload = {
-        "EAN": ean, "UnitName": p.name||"", "Qty": 0, "Unit": p.unit||"", "Price": price,
-        "user_id": currentUser?.id||"", "EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
+      const payload={
+        "EAN": ean,"UnitName": p.name||"","Qty": 0,"Unit": p.unit||"","Price": price,
+        "user_id": currentUser?.id||"","EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
       };
-      setLocalProduct(ean, p.name||"", p.unit||"", price);
-      enqueue(IN_URL, payload);
-      postNow(IN_URL, payload);
+      setLocalProduct(ean,p.name||"",p.unit||"",price);
+      enqueue(IN_URL,payload); postNow(IN_URL,payload);
       popup("Kaina pakeista");
       restartScannerFlow();
     }
 
     /* ===== INVENTORY (333) ===== */
     function startInventory(){
-      const date = invDate.value || new Date().toISOString().slice(0,10);
+      const date=invDate.value||new Date().toISOString().slice(0,10);
       if (!confirm(`Pradėti inventorizaciją ${date}?`)) return;
-      // start (not queued)
-      postNow(INV_URL, { action:"start", date, user_id: currentUser?.id||"" });
+      postNow(INV_URL,{action:"start",date,user_id:currentUser?.id||""});
       popup("Inventorizacija pradėta");
-      currentRoute = "inventory-scan";
-      scanAgain();
-      setTimeout(loadStock, 800);
+      currentRoute="inventory-scan"; scanAgain(); setTimeout(loadStock,800);
     }
     function handleEAN_inventory(ean){
       hide(scannerScreen);
-      const p = products[ean] || {};
-      const sysQty = stockMap[ean];
-      invInfo.innerHTML = `
+      const p=products[ean]||{};
+      const sysQty=stockMap[ean];
+      invInfo.innerHTML=`
         <div class="tag">EAN: ${ean}</div>
         <div class="tag">Pavadinimas: ${p.name||"—"}</div>
         <div class="tag">Sisteminiai: ${sysQty===undefined?"—":sysQty}</div>
       `;
-      invQty.value="";
-      show(invCount); invQty.focus();
+      invQty.value=""; show(invCount); invQty.focus();
     }
     function confirmInvCount(){
-      const ean = lastEAN;
-      const p = products[ean]||{};
-      const qty = parseInt((invQty.value||"0").replace(",",".").trim(),10);
+      const ean=lastEAN; const p=products[ean]||{};
+      const qty=parseInt((invQty.value||"0").replace(",",".").trim(),10);
       if (!(qty>=0)){ popup("Įveskite kiekį"); invQty.focus(); return; }
-      // queue OK (upsert by EAN idempotent)
-      const payload = { action:"count", EAN: ean, NAME: p.name||"", QTY: qty, user_id: currentUser?.id||"" };
-      enqueue(INV_URL, payload);
-      postNow(INV_URL, payload);
-      restartScannerFlow();
-      setTimeout(loadStock, 800);
+      const payload={action:"count",EAN:ean,NAME:p.name||"",QTY:qty,user_id:currentUser?.id||""};
+      enqueue(INV_URL,payload); postNow(INV_URL,payload);
+      restartScannerFlow(); setTimeout(loadStock,800);
     }
     function closeInventory(){
       if (!confirm("Ar tikrai uždaryti inventorizaciją?")) return;
-      postNow(INV_URL, { action:"close", user_id: currentUser?.id||"" });
+      postNow(INV_URL,{action:"close",user_id:currentUser?.id||""});
       popup("Inventorizacija uždaryta");
-      setTimeout(loadStock, 800);
+      setTimeout(loadStock,800);
     }
-
-    /* ===== SETTINGS (444) ===== */
-    function refreshConfig(){
-      jsonp(INV_URL+"?fn=config", "onCfg");
-      jsonp(INV_URL+"?fn=status", "onCfgStatus");
-    }
-    window.onCfg = function(p){
-      if (!p) return;
-      invStatus.textContent = `Būsena: ${p.active ? "Inventorizacija aktyvi" : "Normalus režimas"}`;
-    };
-    window.onCfgStatus = function(p){
-      if (!p) return;
-      invStatus.textContent = `Būsena: ${p.active ? "Inventorizacija aktyvi" : "Normalus režimas"}${p.startedAt? " | Nuo: "+p.startedAt:""}`;
-    }
-    function setSources(){
-      const IN_ID = inId.value.trim(), OUT_ID = outId.value.trim();
-      if (!IN_ID || !OUT_ID){ popup("Įveskite abu ID"); return; }
-      postNow(INV_URL, { action:"set_sources", IN_ID, OUT_ID });
-      popup("Šaltiniai išsaugoti");
-      setTimeout(loadStock, 800);
-    }
-    function switchToNormal(){
-      if (!confirm("Perjungti į normalų režimą (IN−OUT)?")) return;
-      postNow(INV_URL, { action:"close", user_id: currentUser?.id||"" });
-      setTimeout(()=>{ loadStock(); popup("Perjungta į normalų režimą"); }, 800);
-    }
+    function refreshInvStatus(){ jsonp(INV_URL+"?fn=stock","onStock"); }
 
     /* ===== NETWORK ===== */
-    function postNow(url, obj){
-      fetch(url, {
-        method:"POST", mode:"no-cors",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify(obj)
-      }).catch(()=>{}); // we re-send on Sync anyway
+    function postNow(url,obj){
+      fetch(url,{method:"POST",mode:"no-cors",headers:{ "Content-Type":"application/json" },body:JSON.stringify(obj)})
+        .catch(()=>{});
     }
     function syncNow(){
-      // resend buffer (safe duplicates)
-      const items = [...queue];
-      items.forEach(it=> postNow(it.url, it.payload));
-      // refresh stock
+      // resend
+      const items=[...queue]; items.forEach(it=>postNow(it.url,it.payload));
       loadStock();
       popup("Sync paleistas");
     }
 
     /* ===== INIT ===== */
-    // quick stock refresh every 60s set above; also initial after login
-    // ensure audio initialized on first interaction
     document.addEventListener("click", initAudio, { once:true });
+    // pirmas stock užkrovimas kai tik atsiras user
   </script>
 </body>
 </html>
+
 
 
 
