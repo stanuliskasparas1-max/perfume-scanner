@@ -8,41 +8,36 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <style>
-    :root{
-      --bg:#0f1012;--card:#17181c;--txt:#fff;--muted:#b6bdc6;
-      --pri:#00aaff;--pri2:#0088cc;--ok:#00ff99;--warn:#ffcc00;--err:#ff5050;
-    }
+    :root{--bg:#0f1012;--card:#17181c;--txt:#fff;--muted:#b6bdc6;--pri:#00aaff;--pri2:#0088cc;--ok:#00ff99;--warn:#ffcc00;--err:#ff5050}
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
-    h1,h2,h3{margin:10px 0 6px}
     .hidden{display:none}
     .btn{font-size:1.06rem;padding:12px 18px;margin:8px;border:none;border-radius:12px;background:var(--pri);color:#fff;cursor:pointer}
     .btn:hover{background:var(--pri2)}
     .btn-ghost{background:#2a2f36}
     .btn-danger{background:#c83532}
-    .card{width:92vw;max-width:760px;background:var(--card);padding:16px;border-radius:16px;box-shadow:0 0 24px rgba(0,0,0,.35);margin:12px 0}
+    .card{width:92vw;max-width:800px;background:var(--card);padding:16px;border-radius:16px;box-shadow:0 0 24px rgba(0,0,0,.35);margin:12px 0}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .row>*{flex:1}
     label{font-weight:600}
     input,select{width:100%;padding:12px;border:none;border-radius:10px;margin:6px 0;font-size:1.05rem;background:#20242b;color:#fff}
+    h1,h2,h3{margin:10px 0 6px}
     .tag{display:inline-block;background:#232833;border:1px solid #2e3440;border-radius:10px;padding:5px 8px;margin:3px;font-size:.95rem;color:var(--muted)}
     .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
     #scannerWrap{position:relative;width:100vw;height:72vh;max-height:74vh}
     #scanner{width:100%;height:100%}
     #flash{position:absolute;inset:0;background:rgba(0,255,100,.35);display:none;animation:flash .25s ease-out;pointer-events:none}
-    #scanBadge{
-      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-      background:rgba(15,16,18,.85);border:2px solid #00ffaa;box-shadow:0 0 30px rgba(0,255,170,.45);
-      padding:10px 16px;border-radius:999px;font-weight:700;display:none
-    }
+    #scanBadge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(15,16,18,.85);border:2px solid #00ffaa;box-shadow:0 0 30px rgba(0,255,170,.45);padding:10px 16px;border-radius:999px;font-weight:700;display:none}
     @keyframes flash{from{opacity:1}to{opacity:0}}
     #popup{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#2c313a;padding:10px 16px;border-radius:10px;display:none;border:1px solid #3a404c}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
     .chip{padding:8px 12px;border-radius:999px;background:#232833;border:1px solid #2e3440;cursor:pointer}
     .chip:hover{background:#2a3040}
     .muted{opacity:.85;color:var(--muted)}
-    .spacer{height:12px}
     .divider{height:1px;background:#242932;margin:10px 0}
+    .spacer{height:10px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #242932;text-align:left}
   </style>
 </head>
 <body>
@@ -53,7 +48,7 @@
     <div class="row">
       <button class="btn" onclick="doLogin()">Prisijungti</button>
     </div>
-    <div class="muted">Versija: <span id="ver">v2.4.0</span></div>
+    <div class="muted">Versija: <span id="ver">v2.6.0</span></div>
   </div>
 
   <!-- Home -->
@@ -68,14 +63,14 @@
     </div>
   </div>
 
-  <!-- Shared scanner (with local back) -->
+  <!-- Scanner -->
   <div id="scannerScreen" class="hidden">
     <div id="scannerWrap">
       <div id="scanner"></div>
       <div id="flash"></div>
       <div id="scanBadge">SCANNED</div>
     </div>
-    <div class="row" style="padding:8px 12px;max-width:760px;width:92vw">
+    <div class="row" style="padding:8px 12px;max-width:800px;width:92vw">
       <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
     </div>
   </div>
@@ -94,7 +89,7 @@
         <label>Kaina / vnt</label>
         <div class="row" style="gap:6px">
           <input id="priceInput" type="tel" inputmode="decimal" placeholder="0,00" disabled />
-          <button class="btn" id="btnOverride" onclick="enableOverride()">Keisti kainą</button>
+          <button class="btn" onclick="enableOverride()">Keisti kainą</button>
         </div>
       </div>
     </div>
@@ -125,10 +120,7 @@
     <label>Pavadinimas</label>
     <input id="newName" placeholder="Pvz., Dior Sauvage" />
     <label>Vienetas</label>
-    <select id="newUnit">
-      <option value="ml">ml (kvepalai)</option>
-      <option value="pcs">vnt (kitos prekės)</option>
-    </select>
+    <select id="newUnit"><option value="ml">ml (kvepalai)</option><option value="pcs">vnt (kitos prekės)</option></select>
     <label>Bazinė kaina / vienetui</label>
     <input id="newPrice" type="tel" inputmode="decimal" placeholder="0,00" />
     <label>Gautas kiekis</label>
@@ -182,19 +174,44 @@
     <div class="row">
       <button class="btn" onclick="confirmInvCount()">Įrašyti ir kitas</button>
       <button class="btn btn-ghost" onclick="scanAgain()">Skenuoti vėl</button>
-      <button class="btn btn-ghost" onclick="goHome()">Grįžti</button>
+      <button class="btn btn-ghost" onclick="closeInventory()">Uždaryti inventorizaciją</button>
     </div>
   </div>
 
-  <!-- SETTINGS (444 only, supaprastinta) -->
+  <!-- REPORT (333 close & 222 daily) -->
+  <div id="reportPanel" class="card hidden">
+    <h2 id="reportTitle">Ataskaita</h2>
+    <div id="reportInfo" class="muted"></div>
+    <table id="reportTable"><thead><tr><th>EAN</th><th>Pavadinimas</th><th>Vnt</th><th>€</th></tr></thead><tbody></tbody></table>
+    <div class="row"><button class="btn btn-ghost" onclick="goHome()">Grįžti</button></div>
+  </div>
+
+  <!-- SETTINGS (444) -->
   <div id="settings" class="card hidden">
     <h2>Nustatymai (IT)</h2>
     <div id="invStatus" class="muted">Būsena: —</div>
     <div class="divider"></div>
+    <h3>IN/OUT šaltiniai</h3>
+    <div class="row">
+      <input id="inId"  placeholder="IN sheet ID (iš URL /d/ID/)" />
+      <input id="outId" placeholder="OUT sheet ID (iš URL /d/ID/)" />
+    </div>
+    <div class="row">
+      <button class="btn" onclick="setSources()">Išsaugoti šaltinius</button>
+      <button class="btn btn-ghost" onclick="refreshConfig()">Atnaujinti būseną</button>
+      <button class="btn" onclick="closeInventory()">Grąžinti į normalų (uždaryti inventorizaciją)</button>
+    </div>
+    <div class="divider"></div>
+    <h3>Diagnostika</h3>
     <div class="row">
       <button class="btn btn-ghost" onclick="syncNow()">Sync now</button>
-      <button class="btn" onclick="closeInventory()">Uždaryti inventorizaciją</button>
-      <button class="btn btn-danger" onclick="logout()">Atsijungti</button>
+      <button class="btn btn-ghost" onclick="testOut()">Test OUT write</button>
+      <button class="btn btn-ghost" onclick="testIn()">Test IN write</button>
+      <button class="btn btn-danger" onclick="resetApp()">Reset app state</button>
+    </div>
+    <div class="muted">
+      <div>Online: <span id="dOnline">?</span> | Queue size: <span id="dQueue">0</span> | Last stock: <span id="dStockTs">—</span></div>
+      <div>Pastaba: test mygtukai įrašo 1 bandomą įrašą, duplikatai sugaudomi per EventId.</div>
     </div>
   </div>
 
@@ -207,246 +224,129 @@
     const IN_URL  = "https://script.google.com/macros/s/AKfycbztiJK4J-wqvPnYYI_MPnXVxEMVrUwf8s6G35NvXq8Q4-Q_eosz5NzOwkaieoLhycFv/exec";
     const INV_URL = "https://script.google.com/macros/s/AKfycbx8lt1QANX-cXF1WyNx9fon7Ei6G4qWksnpW9cu-qlnr1DhWp-_h39vx8PdMM-oQHUGhQ/exec";
     const RETRY_MS = 30000, MAX_RETRIES = 3;
-    const APP_VERSION = "v2.4.0";
+    const APP_VERSION = "v2.6.0";
 
     /* ===== STATE ===== */
-    let currentUser = null; // {id, role}
-    let html5Qr = null, lastEAN = null, currentRoute = null;
-    // local products { EAN: {name, unit, price} }
+    let currentUser=null, html5Qr=null, lastEAN=null, currentRoute=null;
     let products = JSON.parse(localStorage.getItem("products_cache")||"{}");
-    // stock from backend
-    let stockMap = {}, inventoryActive = false;
-
-    // resend buffer
+    let stockMap={}, inventoryActive=false, lastStockTs="—";
     let queue = JSON.parse(localStorage.getItem("send_queue")||"[]");
-    function saveQueue(){ localStorage.setItem("send_queue", JSON.stringify(queue.slice(-200))); }
-    function enqueue(url,payload){ queue.push({url, payload, ts:Date.now()}); saveQueue(); }
 
     /* ===== UI refs ===== */
-    const login = document.getElementById("login");
-    const loginCode = document.getElementById("loginCode");
-    const home = document.getElementById("home");
-    const who = document.getElementById("who");
-    const menuButtons = document.getElementById("menuButtons");
-    document.getElementById("ver").textContent = APP_VERSION;
-
-    const scannerScreen = document.getElementById("scannerScreen");
-    const flash = document.getElementById("flash");
-    const scanBadge = document.getElementById("scanBadge");
-
-    const sellPanel = document.getElementById("sellPanel");
-    const sellInfo = document.getElementById("sellInfo");
-    const sellChips = document.getElementById("sellChips");
-    const qtyLabel = document.getElementById("qtyLabel");
-    const qtyInput = document.getElementById("qtyInput");
-    const priceInput = document.getElementById("priceInput");
-
-    const inPanel = document.getElementById("inPanel");
-    const inInfo = document.getElementById("inInfo");
-    const inQty = document.getElementById("inQty");
-
-    const inNewPanel = document.getElementById("inNewPanel");
-    const newEAN = document.getElementById("newEAN");
-    const newName = document.getElementById("newName");
-    const newUnit = document.getElementById("newUnit");
-    const newPrice = document.getElementById("newPrice");
-    const newQty = document.getElementById("newQty");
-
-    const chkPanel = document.getElementById("chkPanel");
-    const chkInfo = document.getElementById("chkInfo");
-
-    const pricePanel = document.getElementById("pricePanel");
-    const priceInfo = document.getElementById("priceInfo");
-    const priceNew = document.getElementById("priceNew");
-
-    const invStart = document.getElementById("invStart");
-    const invCount = document.getElementById("invCount");
-    const invDate = document.getElementById("invDate");
-    const invInfo = document.getElementById("invInfo");
-    const invQty = document.getElementById("invQty");
-
-    const settings = document.getElementById("settings");
-    const invStatus = document.getElementById("invStatus");
+    const login=document.getElementById("login"), loginCode=document.getElementById("loginCode");
+    const home=document.getElementById("home"), who=document.getElementById("who"), menuButtons=document.getElementById("menuButtons");
+    document.getElementById("ver").textContent=APP_VERSION;
+    const scannerScreen=document.getElementById("scannerScreen"), flash=document.getElementById("flash"), scanBadge=document.getElementById("scanBadge");
+    const sellPanel=document.getElementById("sellPanel"), sellInfo=document.getElementById("sellInfo"), sellChips=document.getElementById("sellChips");
+    const qtyLabel=document.getElementById("qtyLabel"), qtyInput=document.getElementById("qtyInput"), priceInput=document.getElementById("priceInput");
+    const inPanel=document.getElementById("inPanel"), inInfo=document.getElementById("inInfo"), inQty=document.getElementById("inQty");
+    const inNewPanel=document.getElementById("inNewPanel"), newEAN=document.getElementById("newEAN"), newName=document.getElementById("newName");
+    const newUnit=document.getElementById("newUnit"), newPrice=document.getElementById("newPrice"), newQty=document.getElementById("newQty");
+    const chkPanel=document.getElementById("chkPanel"), chkInfo=document.getElementById("chkInfo");
+    const pricePanel=document.getElementById("pricePanel"), priceInfo=document.getElementById("priceInfo"), priceNew=document.getElementById("priceNew");
+    const invStart=document.getElementById("invStart"), invCount=document.getElementById("invCount"), invDate=document.getElementById("invDate"), invInfo=document.getElementById("invInfo"), invQty=document.getElementById("invQty");
+    const reportPanel=document.getElementById("reportPanel"), reportTitle=document.getElementById("reportTitle"), reportInfo=document.getElementById("reportInfo"), reportTable=document.getElementById("reportTable").querySelector("tbody");
+    const settings=document.getElementById("settings"), invStatus=document.getElementById("invStatus");
+    const inId=document.getElementById("inId"), outId=document.getElementById("outId");
+    const dOnline=document.getElementById("dOnline"), dQueue=document.getElementById("dQueue"), dStockTs=document.getElementById("dStockTs");
 
     /* ===== UTIL ===== */
-    function show(el){ el.classList.remove("hidden"); }
-    function hide(el){ el.classList.add("hidden"); }
-    function popup(msg){
-      const p=document.getElementById("popup");
-      p.textContent=msg; p.style.display="block";
-      setTimeout(()=>p.style.display="none", 2800);
-    }
+    function show(el){ el.classList.remove("hidden"); } function hide(el){ el.classList.add("hidden"); }
+    function popup(msg){ const p=document.getElementById("popup"); p.textContent=msg; p.style.display="block"; setTimeout(()=>p.style.display="none", 2800); }
     function vibrate(ms=45){ if (navigator.vibrate) try{ navigator.vibrate(ms);}catch{} }
-    let beepCtx=null;
-    function initAudio(){ if (beepCtx) return; try{ beepCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch{} }
-    function beep(){
-      if (!beepCtx) return;
-      try{ const o=beepCtx.createOscillator(), g=beepCtx.createGain();
-        o.type="square"; o.frequency.setValueAtTime(1100, beepCtx.currentTime);
-        g.gain.value=.07; o.connect(g).connect(beepCtx.destination); o.start(); o.stop(beepCtx.currentTime+.08);
-      }catch{}
-    }
+    let beepCtx=null; function initAudio(){ if (beepCtx) return; try{ beepCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch{} }
+    function beep(){ if (!beepCtx) return; try{ const o=beepCtx.createOscillator(), g=beepCtx.createGain(); o.type="square"; o.frequency.setValueAtTime(1100, beepCtx.currentTime); g.gain.value=.07; o.connect(g).connect(beepCtx.destination); o.start(); o.stop(beepCtx.currentTime+.08);}catch{} }
     function flashFX(){ flash.style.display="block"; scanBadge.style.display="block"; setTimeout(()=>{flash.style.display="none"; scanBadge.style.display="none";}, 320); }
     function parseCommaNumber(x){ if (typeof x==="number") return x; if (!x) return 0; return Number(String(x).trim().replace(",", ".")); }
     function formatEUR(n){ const v=Number(n||0); return v.toFixed(2).replace(".", ",")+" €"; }
     function saveProducts(){ localStorage.setItem("products_cache", JSON.stringify(products)); }
+    function saveQueue(){ localStorage.setItem("send_queue", JSON.stringify(queue.slice(-200))); }
+    function enqueue(url,payload){ queue.push({url, payload, ts:Date.now()}); saveQueue(); }
 
     /* ===== LOGIN ===== */
-    function roleByCode(code){
-      if (code==="111") return "Pardavėja";
-      if (code==="222") return "Savininkas";
-      if (code==="333") return "Inventorizacija";
-      if (code==="444") return "IT";
-      return null;
-    }
-    function doLogin(){
-      initAudio();
-      const code=(loginCode.value||"").trim();
-      const role=roleByCode(code);
-      if (!role){ popup("Neteisingas kodas"); return; }
-      currentUser={id:code, role};
-      loginCode.value="";
-      showHome();
-      syncNow(); // pirmas sync
-    }
-    function logout(){
-      stopScanner();
-      currentUser=null;
-      [home,scannerScreen,sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invStart,invCount,settings].forEach(hide);
-      show(login);
-    }
+    function roleByCode(code){ if (code==="111") return "Pardavėja"; if (code==="222") return "Savininkas"; if (code==="333") return "Inventorizacija"; if (code==="444") return "IT"; return null; }
+    function doLogin(){ initAudio(); const code=(loginCode.value||"").trim(); const role=roleByCode(code); if (!role){ popup("Neteisingas kodas"); return; } currentUser={id:code, role}; loginCode.value=""; showHome(); syncNow(); }
+    function logout(){ stopScanner(); currentUser=null; [home,scannerScreen,sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invStart,invCount,reportPanel,settings].forEach(hide); show(login); }
 
     /* ===== HOME ===== */
-    function showHome(){
-      hide(login);
-      show(home);
-      who.textContent=`Prisijungęs: ${currentUser.role}`;
-      buildMenu();
-      // uždaryti viską
-      [scannerScreen,sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invStart,invCount,settings].forEach(hide);
-    }
+    function showHome(){ hide(login); show(home); who.textContent=`Prisijungęs: ${currentUser.role}`; buildMenu(); [scannerScreen,sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invStart,invCount,reportPanel,settings].forEach(hide); }
     function buildMenu(){
       menuButtons.innerHTML="";
       const add=(txt,fn)=>{ const b=document.createElement("button"); b.className="btn"; b.textContent=txt; b.onclick=fn; menuButtons.appendChild(b); };
-      if (currentUser.id==="111"){
-        add("Parduoti", ()=>goRoute("sell"));
-        add("Prekių priėmimas", ()=>goRoute("in"));
-        add("Tikrinti likutį", ()=>goRoute("check"));
-      } else if (currentUser.id==="222"){
-        add("Parduoti", ()=>goRoute("sell"));
-        add("Prekių priėmimas", ()=>goRoute("in"));
-        add("Tikrinti likutį", ()=>goRoute("check"));
-        add("Keisti kainą (globaliai)", ()=>goRoute("price"));
-      } else if (currentUser.id==="333"){
-        add("Inventorizacija", ()=>goRoute("inventory"));
-      } else if (currentUser.id==="444"){
-        add("Nustatymai (IT)", ()=>goRoute("settings"));
-      }
+      if (currentUser.id==="111"){ add("Parduoti", ()=>goRoute("sell")); add("Prekių priėmimas", ()=>goRoute("in")); add("Tikrinti likutį", ()=>goRoute("check")); }
+      else if (currentUser.id==="222"){ add("Parduoti", ()=>goRoute("sell")); add("Prekių priėmimas", ()=>goRoute("in")); add("Tikrinti likutį", ()=>goRoute("check")); add("Keisti kainą (globaliai)", ()=>goRoute("price")); add("Dienos pardavimai", showDailySales); }
+      else if (currentUser.id==="333"){ add("Inventorizacija", ()=>goRoute("inventory")); }
+      else if (currentUser.id==="444"){ add("Nustatymai (IT)", ()=>goRoute("settings")); }
     }
 
-    /* ===== ROUTING ===== */
-    function goRoute(r){
-      currentRoute=r;
-      hide(home);
-      if (r==="sell"||r==="in"||r==="check"||r==="price"||r==="inventory-scan"){
-        startScanner();
-      }
+    /* ===== ROUTES ===== */
+    function goRoute(r){ currentRoute=r; hide(home);
+      if (r==="sell"||r==="in"||r==="check"||r==="price"||r==="inventory-scan"){ startScanner(); }
       if (r==="inventory"){ hide(scannerScreen); show(invStart); hide(invCount); }
-      if (r==="settings"){ hide(scannerScreen); show(settings); refreshInvStatus(); }
+      if (r==="settings"){ hide(scannerScreen); show(settings); refreshConfig(); }
     }
-    function goHome(){
-      stopScanner();
-      showHome();
-    }
+    function goHome(){ stopScanner(); showHome(); }
 
     /* ===== SCANNER ===== */
     function startScanner(){
-      show(scannerScreen);
-      lastEAN=null;
-      stopScanner();
+      show(scannerScreen); lastEAN=null; stopScanner();
       html5Qr = new Html5Qrcode("scanner");
       html5Qr.start({facingMode:"environment"},{
         fps:30, qrbox:{width:320,height:220},
         experimentalFeatures:{useBarCodeDetectorIfSupported:true},
         formatsToSupport:[
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,
           Html5QrcodeSupportedFormats.QR_CODE
-        ],
-        rememberLastUsedCamera:true
+        ], rememberLastUsedCamera:true
       }, onScan).catch(err=>console.error(err));
     }
     function stopScanner(){ if (html5Qr){ try{ html5Qr.stop(); }catch{} } }
-    function onScan(txt){
-      if (lastEAN) return;
-      lastEAN=String(txt).trim();
-      vibrate(); beep(); flashFX();
-      if (html5Qr){ html5Qr.stop().then(()=>handleEAN(lastEAN)).catch(()=>handleEAN(lastEAN)); }
-      else handleEAN(lastEAN);
+    function onScan(txt){ if (lastEAN) return; lastEAN=String(txt).trim(); vibrate(); beep(); flashFX();
+      if (html5Qr){ html5Qr.stop().then(()=>handleEAN(lastEAN)).catch(()=>handleEAN(lastEAN)); } else handleEAN(lastEAN);
     }
-    function restartScannerFlow(){
-      [sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invCount].forEach(hide);
-      lastEAN=null; startScanner();
-    }
+    function restartScannerFlow(){ [sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invCount].forEach(hide); lastEAN=null; startScanner(); }
     function scanAgain(){ restartScannerFlow(); }
 
     /* ===== STOCK (JSONP) ===== */
     function jsonp(url, cb){ const s=document.createElement("script"); s.src=url+(url.includes("?")?"&":"?")+"callback="+cb+"&_="+Date.now(); document.body.appendChild(s); s.onload=()=>s.remove(); }
     function loadStock(){ jsonp(INV_URL+"?fn=stock","onStock"); }
     window.onStock = function(p){
-      stockMap = (p && p.stock) || {};
-      inventoryActive = !!(p && p.active);
-      const txt = inventoryActive ? "Inventorizacija aktyvi (šaltinis: 3-ias sheetas)" : "Normalus režimas (IN−OUT)";
-      invStatus.textContent = "Būsena: " + txt;
+      stockMap = (p && p.stock) || {}; inventoryActive = !!(p && p.active);
+      lastStockTs = (p && p.ts) || "—";
+      invStatus.textContent = inventoryActive ? "Būsena: Inventorizacija aktyvi (šaltinis: 3-ias sheetas)" : "Būsena: Normalus režimas (IN−OUT)";
+      dStockTs.textContent = lastStockTs;
     };
     setInterval(loadStock, 60000);
 
     /* ===== PRODUCTS (local) ===== */
-    function setLocalProduct(ean,name,unit,price){ products[ean]={name,unit,price:Number(price||0)}; saveProducts(); }
+    function setLocalProduct(ean,name,unit,price){ products[ean]={name,unit,price:Number(price||0)}; localStorage.setItem("products_cache", JSON.stringify(products)); }
 
     /* ===== HANDLE by route ===== */
     function handleEAN(ean){
       if (currentRoute==="sell"){
         const p=products[ean];
-        if (!p){
-          hide(scannerScreen);
+        if (!p){ hide(scannerScreen);
           sellInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag err">Nežinoma prekė — kreipkitės į administratorių</div>`;
-          sellChips.classList.add("hidden");
-          qtyInput.value=""; priceInput.value=""; priceInput.disabled=true;
-          show(sellPanel); return;
-        }
+          sellChips.classList.add("hidden"); qtyInput.value=""; priceInput.value=""; priceInput.disabled=true; show(sellPanel); return; }
         prepareSellUI(ean,p);
       } else if (currentRoute==="in"){
         const p=products[ean]; if (p) prepareInExisting(ean,p); else prepareInNew(ean);
       } else if (currentRoute==="check"){
         prepareCheckUI(ean, products[ean]||null);
       } else if (currentRoute==="price"){
-        const p=products[ean];
-        hide(scannerScreen);
-        if (!p){
-          priceInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag err">Nežinoma prekė (pirmiausia priimkite IN režimu)</div>`;
-          show(pricePanel); return;
-        }
-        priceInfo.innerHTML = `
-          <div class="tag">EAN: ${ean}</div>
-          <div class="tag">${p.name||"-"}</div>
-          <div class="tag">Unit: ${p.unit||"-"}</div>
-          <div class="tag">Dabartinė kaina: ${formatEUR(p.price)}</div>
-        `;
-        priceNew.value="";
-        show(pricePanel);
+        const p=products[ean]; hide(scannerScreen);
+        if (!p){ priceInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag err">Nežinoma prekė (pirmiausia priimkite IN režimu)</div>`; show(pricePanel); return; }
+        priceInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag">${p.name||"-"}</div><div class="tag">Unit: ${p.unit||"-"}</div><div class="tag">Dabartinė kaina: ${formatEUR(p.price)}</div>`;
+        priceNew.value=""; show(pricePanel);
       } else if (currentRoute==="inventory" || currentRoute==="inventory-scan"){
         handleEAN_inventory(ean);
       }
     }
 
     /* ===== SELL ===== */
-    function prepareSellUI(ean,p){
-      hide(scannerScreen);
+    function prepareSellUI(ean,p){ hide(scannerScreen);
       const sysQty = stockMap[ean];
       sellInfo.innerHTML = `
         <div class="tag">EAN: ${ean}</div>
@@ -454,173 +354,147 @@
         <div class="tag">Unit: ${p.unit||"-"}</div>
         <div class="tag">Kaina: ${formatEUR(p.price)}</div>
         <div class="tag">Likutis: ${sysQty===undefined?"—":sysQty}</div>
-        <div class="tag muted">${inventoryActive?"Šaltinis: Inventorizacija":"Šaltinis: IN−OUT"}</div>
-      `;
+        <div class="tag muted">${inventoryActive?"Šaltinis: Inventorizacija":"Šaltinis: IN−OUT"}</div>`;
       qtyLabel.textContent = p.unit==="ml" ? "Kiek ml?" : "Kiek vnt?";
       qtyInput.value = p.unit==="ml" ? "" : "1";
-      priceInput.value = (p.price ?? 0).toFixed(2).replace(".", ",");
-      priceInput.disabled = true;
-
-      if (p.unit==="ml"){
-        sellChips.innerHTML="";
-        ["30","40","50","100"].forEach(v=>{
-          const c=document.createElement("div"); c.className="chip"; c.textContent=v+" ml";
-          c.onclick=()=>{ qtyInput.value=v; };
-          sellChips.appendChild(c);
-        });
-        sellChips.classList.remove("hidden");
-      } else sellChips.classList.add("hidden");
-
+      priceInput.value = (p.price ?? 0).toFixed(2).replace(".", ","); priceInput.disabled = true;
+      if (p.unit==="ml"){ sellChips.innerHTML=""; ["30","40","50","100"].forEach(v=>{ const c=document.createElement("div"); c.className="chip"; c.textContent=v+" ml"; c.onclick=()=>{ qtyInput.value=v; }; sellChips.appendChild(c); }); sellChips.classList.remove("hidden"); } else sellChips.classList.add("hidden");
       show(sellPanel); qtyInput.focus();
     }
     function enableOverride(){ priceInput.disabled=false; priceInput.focus(); }
     function confirmSale(){
-      const ean=lastEAN; const p=products[ean];
-      if (!p){ popup("Nežinoma prekė"); return; }
-      const qty=parseInt((qtyInput.value||"0").replace(",",".").trim(),10);
-      if (!(qty>0)){ popup("Įveskite kiekį"); return; }
-      const override=!priceInput.disabled;
-      let unitPrice=parseCommaNumber(priceInput.value);
-      if (!override) unitPrice=Number(p.price||0);
-
-      const payload={
-        "EAN": ean, "UnitName": p.name||"", "Qty": qty, "Unit": p.unit||"",
-        "UnitPrice": unitPrice, "Override": override, "user_id": currentUser?.id||"",
-        "EventId":"sale_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
-      };
-      enqueue(OUT_URL,payload); postNow(OUT_URL,payload);
-      restartScannerFlow();
+      const ean=lastEAN; const p=products[ean]; if (!p){ popup("Nežinoma prekė"); return; }
+      const qty=parseInt((qtyInput.value||"0").replace(",",".").trim(),10); if (!(qty>0)){ popup("Įveskite kiekį"); return; }
+      const override=!priceInput.disabled; let unitPrice=parseCommaNumber(priceInput.value); if (!override) unitPrice=Number(p.price||0);
+      const payload={ "EAN":ean,"UnitName":p.name||"","Qty":qty,"Unit":p.unit||"","UnitPrice":unitPrice,"Override":override,"user_id":currentUser?.id||"","EventId":"sale_"+Date.now()+"_"+Math.random().toString(36).slice(2,8) };
+      enqueue(OUT_URL,payload); postNow(OUT_URL,payload); restartScannerFlow();
     }
 
-    /* ===== IN (existing/new) ===== */
-    function prepareInExisting(ean,p){
-      hide(scannerScreen); hide(inNewPanel);
-      inInfo.innerHTML = `
-        <div class="tag">EAN: ${ean}</div>
-        <div class="tag">${p.name||"-"}</div>
-        <div class="tag">Unit: ${p.unit||"-"}</div>
-        <div class="tag">Kaina: ${formatEUR(p.price)}</div>
-      `;
+    /* ===== IN ===== */
+    function prepareInExisting(ean,p){ hide(scannerScreen); hide(inNewPanel);
+      inInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag">${p.name||"-"}</div><div class="tag">Unit: ${p.unit||"-"}</div><div class="tag">Kaina: ${formatEUR(p.price)}</div>`;
       inQty.value=""; show(inPanel); inQty.focus();
     }
     function confirmIn(){
-      const ean=lastEAN; const p=products[ean];
-      const qty=parseInt((inQty.value||"0").replace(",",".").trim(),10);
-      if (!(qty>0)){ popup("Įveskite kiekį"); return; }
-      const payload={
-        "EAN": ean, "UnitName": p?.name||"", "Qty": qty, "Unit": p?.unit||"",
-        "Price": p?.price||0, "user_id": currentUser?.id||"",
-        "EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
-      };
-      enqueue(IN_URL,payload); postNow(IN_URL,payload);
-      restartScannerFlow();
+      const ean=lastEAN; const p=products[ean]; const qty=parseInt((inQty.value||"0").replace(",",".").trim(),10); if (!(qty>0)){ popup("Įveskite kiekį"); return; }
+      const payload={ "EAN":ean,"UnitName":p?.name||"","Qty":qty,"Unit":p?.unit||"","Price":p?.price||0,"user_id":currentUser?.id||"","EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8) };
+      enqueue(IN_URL,payload); postNow(IN_URL,payload); restartScannerFlow();
     }
-    function prepareInNew(ean){
-      hide(scannerScreen); hide(inPanel);
-      newEAN.textContent=ean; newName.value=""; newUnit.value="ml"; newPrice.value=""; newQty.value="";
-      show(inNewPanel); newName.focus();
-    }
+    function prepareInNew(ean){ hide(scannerScreen); hide(inPanel); newEAN.textContent=ean; newName.value=""; newUnit.value="ml"; newPrice.value=""; newQty.value=""; show(inNewPanel); newName.focus(); }
     function saveNewAndIn(){
-      const ean=lastEAN;
-      const name=(newName.value||"").trim();
-      const unit=newUnit.value;
-      const price=parseCommaNumber(newPrice.value);
-      const qty=parseInt((newQty.value||"0").replace(",",".").trim(),10);
-      if (!name){ popup("Įveskite pavadinimą"); return; }
-      if (!(qty>0)){ popup("Įveskite kiekį"); return; }
-
+      const ean=lastEAN, name=(newName.value||"").trim(), unit=newUnit.value, price=parseCommaNumber(newPrice.value), qty=parseInt((newQty.value||"0").replace(",",".").trim(),10);
+      if (!name){ popup("Įveskite pavadinimą"); return; } if (!(qty>0)){ popup("Įveskite kiekį"); return; }
       setLocalProduct(ean,name,unit,price);
-      const payload={
-        "EAN": ean,"UnitName": name,"Qty": qty,"Unit": unit,"Price": price,
-        "user_id": currentUser?.id||"","EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
-      };
-      enqueue(IN_URL,payload); postNow(IN_URL,payload);
-      restartScannerFlow();
+      const payload={ "EAN":ean,"UnitName":name,"Qty":qty,"Unit":unit,"Price":price,"user_id":currentUser?.id||"","EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8) };
+      enqueue(IN_URL,payload); postNow(IN_URL,payload); restartScannerFlow();
     }
 
     /* ===== CHECK ===== */
-    function prepareCheckUI(ean,p){
-      hide(scannerScreen);
-      const nameTxt=p?(p.name||"—"):"—";
-      const unitTxt=p?(p.unit||"—"):"—";
-      const priceTxt=p?formatEUR(p.price):"—";
-      const sysQty=stockMap[ean];
-      chkInfo.innerHTML=`
-        <div class="tag">EAN: ${ean}</div>
-        <div class="tag">Pavadinimas: ${nameTxt}</div>
-        <div class="tag">Unit: ${unitTxt}</div>
-        <div class="tag">Kaina: ${priceTxt}</div>
-        <div class="tag">Kiekis (sisteminiai): ${sysQty===undefined?"—":sysQty}</div>
-      `;
+    function prepareCheckUI(ean,p){ hide(scannerScreen);
+      const name=p?(p.name||"—"):"—", unit=p?(p.unit||"—"):"—", price=p?formatEUR(p.price):"—", sysQty=stockMap[ean];
+      chkInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag">Pavadinimas: ${name}</div><div class="tag">Unit: ${unit}</div><div class="tag">Kaina: ${price}</div><div class="tag">Kiekis (sisteminiai): ${sysQty===undefined?"—":sysQty}</div>`;
       show(chkPanel);
     }
 
-    /* ===== GLOBAL PRICE (222) ===== */
+    /* ===== GLOBAL PRICE ===== */
     function confirmGlobalPrice(){
-      const ean=lastEAN; const p=products[ean];
-      if (!p){ popup("Nežinoma prekė"); return; }
-      const price=parseCommaNumber(priceNew.value);
-      if (!(price>=0)){ popup("Įveskite kainą"); return; }
-      const payload={
-        "EAN": ean,"UnitName": p.name||"","Qty": 0,"Unit": p.unit||"","Price": price,
-        "user_id": currentUser?.id||"","EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
-      };
-      setLocalProduct(ean,p.name||"",p.unit||"",price);
-      enqueue(IN_URL,payload); postNow(IN_URL,payload);
-      popup("Kaina pakeista");
-      restartScannerFlow();
+      const ean=lastEAN, p=products[ean]; if (!p){ popup("Nežinoma prekė"); return; }
+      const price=parseCommaNumber(priceNew.value); if (!(price>=0)){ popup("Įveskite kainą"); return; }
+      const payload={ "EAN":ean,"UnitName":p.name||"","Qty":0,"Unit":p.unit||"","Price":price,"user_id":currentUser?.id||"","EventId":"in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8) };
+      setLocalProduct(ean,p.name||"",p.unit||"",price); enqueue(IN_URL,payload); postNow(IN_URL,payload); popup("Kaina pakeista"); restartScannerFlow();
     }
 
     /* ===== INVENTORY (333) ===== */
-    function startInventory(){
-      const date=invDate.value||new Date().toISOString().slice(0,10);
+    function startInventory(){ const date=invDate.value||new Date().toISOString().slice(0,10);
       if (!confirm(`Pradėti inventorizaciją ${date}?`)) return;
-      postNow(INV_URL,{action:"start",date,user_id:currentUser?.id||""});
-      popup("Inventorizacija pradėta");
+      postNow(INV_URL,{action:"start",date,user_id:currentUser?.id||""}); popup("Inventorizacija pradėta");
       currentRoute="inventory-scan"; scanAgain(); setTimeout(loadStock,800);
     }
-    function handleEAN_inventory(ean){
-      hide(scannerScreen);
-      const p=products[ean]||{};
-      const sysQty=stockMap[ean];
-      invInfo.innerHTML=`
-        <div class="tag">EAN: ${ean}</div>
-        <div class="tag">Pavadinimas: ${p.name||"—"}</div>
-        <div class="tag">Sisteminiai: ${sysQty===undefined?"—":sysQty}</div>
-      `;
+    function handleEAN_inventory(ean){ hide(scannerScreen); const p=products[ean]||{}, sysQty=stockMap[ean];
+      invInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag">Pavadinimas: ${p.name||"—"}</div><div class="tag">Sisteminiai: ${sysQty===undefined?"—":sysQty}</div>`;
       invQty.value=""; show(invCount); invQty.focus();
     }
-    function confirmInvCount(){
-      const ean=lastEAN; const p=products[ean]||{};
-      const qty=parseInt((invQty.value||"0").replace(",",".").trim(),10);
+    function confirmInvCount(){ const ean=lastEAN, p=products[ean]||{}, qty=parseInt((invQty.value||"0").replace(",",".").trim(),10);
       if (!(qty>=0)){ popup("Įveskite kiekį"); invQty.focus(); return; }
       const payload={action:"count",EAN:ean,NAME:p.name||"",QTY:qty,user_id:currentUser?.id||""};
-      enqueue(INV_URL,payload); postNow(INV_URL,payload);
-      restartScannerFlow(); setTimeout(loadStock,800);
+      enqueue(INV_URL,payload); postNow(INV_URL,payload); restartScannerFlow(); setTimeout(loadStock,800);
     }
     function closeInventory(){
       if (!confirm("Ar tikrai uždaryti inventorizaciją?")) return;
-      postNow(INV_URL,{action:"close",user_id:currentUser?.id||""});
-      popup("Inventorizacija uždaryta");
+      postNow(INV_URL,{action:"close",user_id:currentUser?.id||""}); popup("Inventorizacija uždaryta");
+      // parodyti ataskaitą nuo inventorizacijos pradžios iki šiandien
+      jsonp(INV_URL+"?fn=status","onInvStatusForReport");
       setTimeout(loadStock,800);
     }
-    function refreshInvStatus(){ jsonp(INV_URL+"?fn=stock","onStock"); }
+    window.onInvStatusForReport = function(p){
+      const started = (p && p.startedAt) ? String(p.startedAt).slice(0,10) : null;
+      const today = new Date().toISOString().slice(0,10);
+      if (!started){ popup("Nėra inventorizacijos pradžios datos"); return; }
+      jsonp(INV_URL+`?fn=sales_range&from=${started}&to=${today}`,"onInvReport");
+    }
+    window.onInvReport = function(r){
+      hide(scannerScreen); hide(invStart); hide(invCount);
+      reportTitle.textContent = "Ataskaita nuo inventorizacijos pradžios";
+      renderReport(r, `Nuo: ${r.from} iki: ${r.to}`);
+    }
+
+    /* ===== 222 – Dienos pardavimai ===== */
+    function showDailySales(){
+      const d = prompt("Įveskite datą (YYYY-MM-DD)", new Date().toISOString().slice(0,10));
+      if (!d) return;
+      jsonp(INV_URL+`?fn=sales&date=${d}`,"onDailySales");
+    }
+    window.onDailySales = function(r){
+      reportTitle.textContent = `Dienos pardavimai (${r.date})`;
+      renderReport(r, `Iš viso: ${r.totals.qty} vnt | Apyvarta: ${formatEUR(r.totals.revenue)}`);
+      hide(scannerScreen); show(reportPanel);
+    }
+
+    /* ===== REPORT RENDER ===== */
+    function renderReport(r, headerTxt){
+      reportInfo.textContent = headerTxt || "";
+      const tbody = reportTable; tbody.innerHTML="";
+      let totalQty=0, totalRev=0;
+      if (r && r.rows){
+        r.rows.forEach(row=>{
+          const tr=document.createElement("tr");
+          const rev = Number(row.Qty||0) * Number(row.UnitPrice||0);
+          tr.innerHTML = `<td>${row.EAN||""}</td><td>${row.UnitName||""}</td><td>${row.Qty||0}</td><td>${formatEUR(rev)}</td>`;
+          tbody.appendChild(tr);
+          totalQty += Number(row.Qty||0);
+          totalRev += rev;
+        });
+      }
+      const tr=document.createElement("tr");
+      tr.innerHTML = `<td><b>VISO</b></td><td></td><td><b>${totalQty}</b></td><td><b>${formatEUR(totalRev)}</b></td>`;
+      tbody.appendChild(tr);
+      show(reportPanel);
+    }
+
+    /* ===== SETTINGS (444) ===== */
+    function refreshConfig(){ jsonp(INV_URL+"?fn=config","onCfg"); jsonp(INV_URL+"?fn=stock","onStock"); }
+    window.onCfg=function(p){ if (!p) return; invStatus.textContent = (p.active?"Būsena: Inventorizacija aktyvi":"Būsena: Normalus režimas") + (p.startedAt?(" | Nuo: "+p.startedAt):""); }
+    function setSources(){
+      const IN_ID=inId.value.trim(), OUT_ID=outId.value.trim();
+      if (!IN_ID || !OUT_ID){ popup("Įveskite abu ID"); return; }
+      postNow(INV_URL,{action:"set_sources",IN_ID,OUT_ID}); popup("Šaltiniai išsaugoti"); setTimeout(loadStock,800);
+    }
+    function testOut(){ const payload={"EAN":"TESTEAN","UnitName":"TEST ITEM","Qty":1,"Unit":"pcs","UnitPrice":0.01,"Override":false,"user_id":currentUser?.id||"","EventId":"test_out_"+Date.now()}; enqueue(OUT_URL,payload); postNow(OUT_URL,payload); popup("OUT test išsiųstas"); }
+    function testIn(){ const payload={"EAN":"TESTEAN","UnitName":"TEST ITEM","Qty":1,"Unit":"pcs","Price":0.01,"user_id":currentUser?.id||"","EventId":"test_in_"+Date.now()}; enqueue(IN_URL,payload); postNow(IN_URL,payload); popup("IN test išsiųstas"); }
+    function resetApp(){ if (!confirm("Išvalyti vietinę būseną? (produktai + eilė)")) return; products={}; localStorage.setItem("products_cache","{}"); queue=[]; saveQueue(); popup("Išvalyta."); }
 
     /* ===== NETWORK ===== */
     function postNow(url,obj){
       fetch(url,{method:"POST",mode:"no-cors",headers:{ "Content-Type":"application/json" },body:JSON.stringify(obj)})
-        .catch(()=>{});
+        .catch(()=>{ /* tyliai */ });
     }
-    function syncNow(){
-      // resend
-      const items=[...queue]; items.forEach(it=>postNow(it.url,it.payload));
-      loadStock();
-      popup("Sync paleistas");
-    }
+    function syncNow(){ const items=[...queue]; items.forEach(it=>postNow(it.url,it.payload)); loadStock(); popup("Sync paleistas"); }
+    window.addEventListener("online", ()=>{ dOnline.textContent="online"; }); window.addEventListener("offline", ()=>{ dOnline.textContent="offline"; });
+    setInterval(()=>{ dOnline.textContent = navigator.onLine ? "online" : "offline"; dQueue.textContent = String(queue.length); }, 1000);
 
     /* ===== INIT ===== */
     document.addEventListener("click", initAudio, { once:true });
-    // pirmas stock užkrovimas kai tik atsiras user
+    // pirmą stock užsikraus po prisijungimo per syncNow()
   </script>
 </body>
 </html>
