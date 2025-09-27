@@ -1,242 +1,657 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lt">
 <head>
-  <meta charset="UTF-8">
-  <title>Perfume POS Scanner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Store POS (Web)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- no-cache to force fresh -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    h1 { margin: 20px 0; font-size: 2rem; text-align: center; }
-    .hidden { display: none; }
-    button {
-      font-size: 1.2rem;
-      padding: 12px 20px;
-      margin: 10px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      background: #00aaff;
-      color: white;
-      transition: background 0.3s, transform 0.2s;
-    }
-    button:hover { background: #0088cc; transform: scale(1.05); }
-    #scanner { width: 100vw; height: 70vh; }
-    #flash-effect {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,255,100,0.5);
-      display: none;
-      animation: flash 0.3s ease-out;
-    }
-    @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
-    select, input {
-      font-size: 1.2rem; padding: 10px; margin: 10px;
-      border-radius: 10px; border: none; outline: none;
-    }
-    #sales-list { width: 90%; max-width: 600px; margin-top: 20px; }
-    .sale-item { padding: 6px; border-bottom: 1px solid #444; }
-    .ok { color: #00ff99; }
-    .retry { color: #ffaa00; }
-    .fail { color: #ff4444; }
-    #totals { margin-top: 15px; font-weight: bold; }
-    #popup {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: #ff4444; color: white; padding: 12px 20px; border-radius: 10px;
-      display: none;
-    }
+    :root{--bg:#111;--card:#1a1a1a;--txt:#fff;--pri:#00aaff;--pri2:#0088cc;--ok:#00ff99;--warn:#ffcc00;--err:#ff5555}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial, sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+    h1,h2,h3{margin:12px 0}
+    .hidden{display:none}
+    .btn{font-size:1.1rem;padding:12px 18px;margin:8px;border:none;border-radius:12px;background:var(--pri);color:#fff;cursor:pointer}
+    .btn:hover{background:var(--pri2)}
+    .card{width:92vw;max-width:720px;background:var(--card);padding:16px;border-radius:14px;box-shadow:0 0 24px rgba(0,0,0,.35);margin:12px 0}
+    .row{display:flex;gap:10px;align-items:center}
+    .row>*{flex:1}
+    label{font-weight:600}
+    input,select{width:100%;padding:10px;border:none;border-radius:10px;margin:6px 0;font-size:1.05rem}
+    .topbar{position:fixed;top:10px;right:10px;z-index:10}
+    .tag{display:inline-block;background:#2a2a2a;border-radius:10px;padding:5px 8px;margin:3px;font-size:.95rem}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+    #scannerWrap{position:relative;width:100vw;height:70vh}
+    #scanner{width:100%;height:100%}
+    #flash{position:absolute;inset:0;background:rgba(0,255,100,.45);display:none;animation:flash .25s ease-out;pointer-events:none}
+    @keyframes flash{from{opacity:1}to{opacity:0}}
+    #popup{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#333;padding:10px 16px;border-radius:10px;display:none}
+    .muted{opacity:.8;font-size:.95rem}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+    .chip{padding:6px 10px;border-radius:999px;background:#2a2a2a;cursor:pointer}
+    .chip:hover{background:#3a3a3a}
+    .spacer{height:12px}
   </style>
 </head>
 <body>
-  <!-- Menu -->
-  <div id="menu">
-    <h1>Perfume POS</h1>
-    <button onclick="showScanner()">Start Reading</button>
-    <button onclick="showSales()">Today’s Sales</button>
-    <button onclick="showSettings()">Settings</button>
+  <!-- Top right back button -->
+  <div class="topbar hidden" id="backBtnWrap">
+    <button class="btn" onclick="goHome()">Grįžti</button>
   </div>
 
-  <!-- Settings -->
-  <div id="settings" class="hidden">
-    <h1>Settings</h1>
-    <p>Version: <span id="version">v1.0.0</span></p>
-    <button onclick="backToMenu()">Back</button>
+  <!-- Login -->
+  <div id="login" class="card">
+    <h1>Prisijungimas</h1>
+    <p class="muted">Įveskite vartotojo kodą: 111 (pardavėja), 222 (savininkas), 333 (inventorizacija), 444 (IT)</p>
+    <input id="loginCode" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Vartotojo kodas (pvz., 111)" />
+    <button class="btn" onclick="doLogin()">Prisijungti</button>
   </div>
 
-  <!-- Scanner -->
-  <div id="scanner-screen" class="hidden">
-    <div style="position:relative;width:100vw;height:70vh;">
+  <!-- Home menu -->
+  <div id="home" class="card hidden">
+    <h1>Store POS</h1>
+    <div id="who" class="muted"></div>
+    <div id="menuButtons" class="row" style="flex-wrap:wrap"></div>
+  </div>
+
+  <!-- Scanner area (shared) -->
+  <div id="scannerScreen" class="hidden">
+    <div id="scannerWrap">
       <div id="scanner"></div>
-      <div id="flash-effect"></div>
-    </div>
-    <div id="form-container" class="hidden">
-      <label for="quantity">Quantity:</label>
-      <select id="quantity">
-        <option value="30">30 ml</option>
-        <option value="40">40 ml</option>
-        <option value="50">50 ml</option>
-        <option value="custom">Custom</option>
-      </select>
-      <input id="customQuantity" type="number" min="1"
-             inputmode="numeric" pattern="[0-9]*"
-             placeholder="Enter ml" style="display:none;">
-      <br>
-      <button onclick="confirmSale()">Send</button>
+      <div id="flash"></div>
     </div>
   </div>
 
-  <!-- Sales Summary -->
-  <div id="sales-screen" class="hidden">
-    <h1>Today’s Sales</h1>
-    <div id="sales-list"></div>
-    <div id="totals"></div>
-    <button onclick="backToMenu()">Back</button>
+  <!-- SELL panel -->
+  <div id="sellPanel" class="card hidden">
+    <h2>Pardavimas</h2>
+    <div id="sellInfo" class="muted"></div>
+    <div class="spacer"></div>
+    <div id="sellChips" class="chips hidden"></div>
+    <div class="row">
+      <div>
+        <label id="qtyLabel" for="qtyInput">Kiekis</label>
+        <input id="qtyInput" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Įveskite kiekį" />
+      </div>
+      <div>
+        <label>Kaina / vnt</label>
+        <div class="row" style="gap:6px">
+          <input id="priceInput" type="tel" inputmode="decimal" placeholder="0,00" disabled />
+          <button class="btn" id="btnOverride" onclick="enableOverride()">Keisti kainą</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="confirmSale()">ENTER</button>
+  </div>
+
+  <!-- IN panel: existing product -->
+  <div id="inPanel" class="card hidden">
+    <h2>Prekių priėmimas</h2>
+    <div id="inInfo" class="muted"></div>
+    <label>Gautas kiekis</label>
+    <input id="inQty" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Kiekis" />
+    <button class="btn" onclick="confirmIn()">Įrašyti</button>
+  </div>
+
+  <!-- IN panel: new product -->
+  <div id="inNewPanel" class="card hidden">
+    <h2>Nauja prekė</h2>
+    <div><b>EAN:</b> <span id="newEAN"></span></div>
+    <label>Pavadinimas</label>
+    <input id="newName" placeholder="Pvz., Dior Sauvage" />
+    <label>Vienetas</label>
+    <select id="newUnit">
+      <option value="ml">ml (kvepalai)</option>
+      <option value="pcs">vnt (kitos prekės)</option>
+    </select>
+    <label>Bazinė kaina / vienetui</label>
+    <input id="newPrice" type="tel" inputmode="decimal" placeholder="0,00" />
+    <label>Gautas kiekis</label>
+    <input id="newQty" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Kiekis" />
+    <button class="btn" onclick="saveNewAndIn()">Išsaugoti ir įrašyti</button>
+  </div>
+
+  <!-- CHECK STOCK panel -->
+  <div id="chkPanel" class="card hidden">
+    <h2>Tikrinti likutį</h2>
+    <div id="chkInfo" class="muted"></div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="scanAgain()">Skenuoti vėl</button>
+  </div>
+
+  <!-- GLOBAL PRICE CHANGE (222) -->
+  <div id="pricePanel" class="card hidden">
+    <h2>Keisti kainą (visam stockui)</h2>
+    <div id="priceInfo" class="muted"></div>
+    <label>Nauja kaina / vienetui</label>
+    <input id="priceNew" type="tel" inputmode="decimal" placeholder="0,00" />
+    <button class="btn" onclick="confirmGlobalPrice()">Patvirtinti kainą</button>
+  </div>
+
+  <!-- INVENTORY (333) -->
+  <div id="invStart" class="card hidden">
+    <h2>Inventorizacija</h2>
+    <label>Inventorizacijos data</label>
+    <input id="invDate" type="date" />
+    <button class="btn" onclick="startInventory()">Pradėti inventorizaciją</button>
+    <p class="muted">Pradėjus – bus klausiama kiekvienos prekės kiekio. Likučiai šiuo etapu rodomi „—“ (skaitymą pridėsime vėliau).</p>
+  </div>
+
+  <div id="invCount" class="card hidden">
+    <h2>Skaičiavimas</h2>
+    <div id="invInfo" class="muted"></div>
+    <label>Naujas suskaičiuotas kiekis</label>
+    <input id="invQty" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Kiekis" />
+    <button class="btn" onclick="confirmInvCount()">Įrašyti ir kitas</button>
+  </div>
+
+  <div id="invClose" class="card hidden">
+    <h2>Uždaryti inventorizaciją</h2>
+    <button class="btn" onclick="closeInventory()">Uždaryti</button>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="settings" class="card hidden">
+    <h2>Nustatymai</h2>
+    <div>Versija: <span id="ver">v2.1.0</span></div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="clearCache()">Išvalyti įrenginio talpyklą</button>
+    <p class="muted">URL’ai nustatyti į jūsų Apps Script Web App:</p>
+    <div class="muted">
+      <div>OUT: <code id="outUrl"></code></div>
+      <div>IN: <code id="inUrl"></code></div>
+      <div>INVENTORY: <code id="invUrl"></code></div>
+    </div>
   </div>
 
   <!-- Popup -->
   <div id="popup"></div>
 
   <!-- html5-qrcode -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/html5-qrcode?v=2"></script>
   <script>
-    const menu = document.getElementById("menu");
+    /* ===== CONFIG ===== */
+    const OUT_URL = "https://script.google.com/macros/s/AKfycbwuu6IvwkwvubIpg9zSbuT9Alj_cZcWWxSM62ZVt2z3zf3IxiwxdtLMor1IRt943lg9uQ/exec";
+    const IN_URL  = "https://script.google.com/macros/s/AKfycbztiJK4J-wqvPnYYI_MPnXVxEMVrUwf8s6G35NvXq8Q4-Q_eosz5NzOwkaieoLhycFv/exec";
+    const INV_URL = "https://script.google.com/macros/s/AKfycbx8lt1QANX-cXF1WyNx9fon7Ei6G4qWksnpW9cu-qlnr1DhWp-_h39vx8PdMM-oQHUGhQ/exec";
+    const RETRY_MS = 30000, MAX_RETRIES = 3;
+
+    /* ===== STATE ===== */
+    let currentUser = null; // {id, role}
+    let html5Qr = null;
+    let lastEAN = null;
+    // Vietinė "produktų" bazė tik iš IN įvykių: { EAN: {name, unit, price} }
+    let products = JSON.parse(localStorage.getItem("products_cache") || "{}");
+
+    // UI refs
+    const backBtnWrap = document.getElementById("backBtnWrap");
+    const login = document.getElementById("login");
+    const loginCode = document.getElementById("loginCode");
+    const home = document.getElementById("home");
+    const who = document.getElementById("who");
+    const menuButtons = document.getElementById("menuButtons");
+    const scannerScreen = document.getElementById("scannerScreen");
+    const flash = document.getElementById("flash");
+    const sellPanel = document.getElementById("sellPanel");
+    const sellInfo = document.getElementById("sellInfo");
+    const sellChips = document.getElementById("sellChips");
+    const qtyLabel = document.getElementById("qtyLabel");
+    const qtyInput = document.getElementById("qtyInput");
+    const priceInput = document.getElementById("priceInput");
+    const btnOverride = document.getElementById("btnOverride");
+    const inPanel = document.getElementById("inPanel");
+    const inInfo = document.getElementById("inInfo");
+    const inQty = document.getElementById("inQty");
+    const inNewPanel = document.getElementById("inNewPanel");
+    const newEAN = document.getElementById("newEAN");
+    const newName = document.getElementById("newName");
+    const newUnit = document.getElementById("newUnit");
+    const newPrice = document.getElementById("newPrice");
+    const newQty = document.getElementById("newQty");
+    const chkPanel = document.getElementById("chkPanel");
+    const chkInfo = document.getElementById("chkInfo");
+    const pricePanel = document.getElementById("pricePanel");
+    const priceInfo = document.getElementById("priceInfo");
+    const priceNew = document.getElementById("priceNew");
+    const invStart = document.getElementById("invStart");
+    const invCount = document.getElementById("invCount");
+    const invClose = document.getElementById("invClose");
+    const invDate = document.getElementById("invDate");
+    const invInfo = document.getElementById("invInfo");
+    const invQty = document.getElementById("invQty");
     const settings = document.getElementById("settings");
-    const scannerScreen = document.getElementById("scanner-screen");
-    const salesScreen = document.getElementById("sales-screen");
-    const formContainer = document.getElementById("form-container");
-    const scannerDiv = document.getElementById("scanner");
-    const flashEffect = document.getElementById("flash-effect");
-    const quantitySelect = document.getElementById("quantity");
-    const customQuantity = document.getElementById("customQuantity");
-    const salesList = document.getElementById("sales-list");
-    const totalsDiv = document.getElementById("totals");
-    const popup = document.getElementById("popup");
+    const outUrl = document.getElementById("outUrl");
+    const inUrl = document.getElementById("inUrl");
+    const invUrl = document.getElementById("invUrl");
 
-    let html5QrCode, lastCode = null;
-    let sales = JSON.parse(localStorage.getItem("sales")) || [];
-    const APP_VERSION = "v1.0.0";
-    document.getElementById("version").textContent = APP_VERSION;
+    outUrl.textContent = OUT_URL;
+    inUrl.textContent = IN_URL;
+    invUrl.textContent = INV_URL;
 
-    // Reset daily
-    const today = new Date().toDateString();
-    if (localStorage.getItem("salesDate") !== today) {
-      sales = []; localStorage.setItem("salesDate", today);
-      localStorage.setItem("sales", JSON.stringify(sales));
+    /* ===== UTIL ===== */
+    function show(el){ el.classList.remove("hidden"); }
+    function hide(el){ el.classList.add("hidden"); }
+    function popup(msg){
+      const p = document.getElementById("popup");
+      p.textContent = msg; p.style.display="block";
+      setTimeout(()=>p.style.display="none", 3000);
     }
-
-    // UI navigation
-    function showScanner() { menu.classList.add("hidden"); settings.classList.add("hidden"); salesScreen.classList.add("hidden"); scannerScreen.classList.remove("hidden"); startScanner(); }
-    function showSettings() { menu.classList.add("hidden"); settings.classList.remove("hidden"); }
-    function showSales() { menu.classList.add("hidden"); salesScreen.classList.remove("hidden"); renderSales(); }
-    function backToMenu() { settings.classList.add("hidden"); scannerScreen.classList.add("hidden"); salesScreen.classList.add("hidden"); menu.classList.remove("hidden"); stopScanner(); }
-
-    // Scanner
-    function startScanner() {
-      html5QrCode = new Html5Qrcode("scanner");
-      html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 300, height: 200 } },
-        code => {
-          if (!lastCode) {
-            lastCode = code;
-            playBeep();
-            flashEffect.style.display = "block";
-            setTimeout(() => flashEffect.style.display = "none", 300);
-            html5QrCode.stop().then(() => formContainer.classList.remove("hidden"));
-          }
-        }
-      ).catch(err => console.error("Scanner error:", err));
+    function beep(){
+      try{ const ctx=new (window.AudioContext||window.webkitAudioContext)();
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="sine"; o.frequency.setValueAtTime(1100, ctx.currentTime);
+        g.gain.value=0.06; o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.08);
+      }catch{}
     }
-    function stopScanner() { if (html5QrCode) html5QrCode.stop().catch(() => {}); }
-
-    // Beep
-    function playBeep() {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      osc.type = "sine"; osc.frequency.setValueAtTime(1000, ctx.currentTime);
-      osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.1);
+    function parseCommaNumber(str){
+      if (typeof str === "number") return str;
+      if (!str) return 0;
+      return Number(String(str).trim().replace(",", "."));
     }
+    function formatEUR(n){ const v = Number(n||0); return v.toFixed(2).replace(".", ",") + " €"; }
+    function saveProducts(){ localStorage.setItem("products_cache", JSON.stringify(products)); }
 
-    // Confirm sale
-    function confirmSale() {
-      let qty = quantitySelect.value;
-      if (qty === "custom") qty = customQuantity.value || "0";
-      const sale = {
-        time: new Date().toLocaleTimeString(),
-        barcode: lastCode,
-        volume: qty,
-        status: "pending",
-        retries: 0
-      };
-      sales.push(sale);
-      localStorage.setItem("sales", JSON.stringify(sales));
-      uploadSale(sale);
-      lastCode = null;
-      formContainer.classList.add("hidden");
-      startScanner();
+    /* ===== LOGIN ===== */
+    function roleByCode(code){
+      if (code==="111") return "Pardavėja";
+      if (code==="222") return "Savininkas";
+      if (code==="333") return "Inventorizacija";
+      if (code==="444") return "IT";
+      return null;
     }
-
-    // Upload sale
-    function uploadSale(sale) {
-      fetch("https://script.google.com/macros/s/AKfycbwcXFTQY-pZMCWy8hN82XGqt8jouZv2K7hcXF3_21mASKX0YGX2wR33-9Ai834ErVVAzA/exec", {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({ barcode: sale.barcode, volume: sale.volume }),
-        headers: { "Content-Type": "application/json" }
-      }).then(() => {
-        sale.status = "ok";
-        localStorage.setItem("sales", JSON.stringify(sales));
-      }).catch(() => retrySale(sale));
+    function doLogin(){
+      const code = (loginCode.value||"").trim();
+      const role = roleByCode(code);
+      if (!role){ popup("Neteisingas kodas"); return; }
+      currentUser = { id: code, role };
+      loginCode.value="";
+      showHome();
     }
-
-    // Retry
-    function retrySale(sale) {
-      if (sale.retries < 3) {
-        sale.status = "retry"; sale.retries++;
-        setTimeout(() => uploadSale(sale), 30000);
-      } else {
-        sale.status = "fail";
-        showPopup(`❌ Upload failed: ${sale.barcode} | ${sale.volume} ml`);
+    function showHome(){
+      hide(login);
+      show(home);
+      who.textContent = `Prisijungęs: ${currentUser.role} (ID: ${currentUser.id})`;
+      backBtnWrap.classList.add("hidden");
+      menuButtons.innerHTML = "";
+      const addBtn = (txt, fn)=>{ const b=document.createElement("button"); b.className="btn"; b.textContent=txt; b.onclick=fn; menuButtons.appendChild(b); };
+      if (currentUser.id==="111"){ // Pardavėja
+        addBtn("Parduoti", goSell);
+        addBtn("Prekių priėmimas", goIn);
+        addBtn("Tikrinti likutį", goCheck);
+        addBtn("Nustatymai", goSettings);
+      } else if (currentUser.id==="222"){ // Savininkas
+        addBtn("Parduoti", goSell);
+        addBtn("Prekių priėmimas", goIn);
+        addBtn("Tikrinti likutį", goCheck);
+        addBtn("Keisti kainą (globaliai)", goPriceChange);
+        addBtn("Nustatymai", goSettings);
+      } else if (currentUser.id==="333"){ // Inventorizacija
+        addBtn("Inventorizacija", goInventory);
+        addBtn("Nustatymai", goSettings);
+      } else if (currentUser.id==="444"){ // IT
+        addBtn("Nustatymai (IT)", goSettings);
       }
-      localStorage.setItem("sales", JSON.stringify(sales));
+    }
+    function goHome(){
+      stopScanner();
+      [scannerScreen,sellPanel,inPanel,inNewPanel,chkPanel,pricePanel,invStart,invCount,invClose,settings].forEach(hide);
+      show(home);
+      backBtnWrap.classList.add("hidden");
     }
 
-    // Render sales summary
-    function renderSales() {
-      salesList.innerHTML = "";
-      let total = 0, count = 0;
-      sales.forEach(s => {
-        const div = document.createElement("div");
-        div.className = "sale-item " + (s.status === "ok" ? "ok" : s.status === "retry" ? "retry" : "fail");
-        div.textContent = `${s.time} | ${s.barcode} | ${s.volume} ml ${statusText(s)}`;
-        salesList.appendChild(div);
-        total += parseInt(s.volume) || 0; count++;
+    /* ===== SCANNER ===== */
+    function startScanner(){
+      show(scannerScreen);
+      backBtnWrap.classList.remove("hidden");
+      stopScanner();
+      html5Qr = new Html5Qrcode("scanner");
+      html5Qr.start({facingMode:"environment"},{
+        fps:30, qrbox:{width:320,height:220},
+        experimentalFeatures:{useBarCodeDetectorIfSupported:true},
+        formatsToSupport:[
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.QR_CODE
+        ],
+        rememberLastUsedCamera:true
+      }, onScan).catch(err=>console.error(err));
+    }
+    function stopScanner(){ if (html5Qr){ html5Qr.stop().catch(()=>{}); } }
+    function onScan(txt){
+      if (lastEAN) return;
+      lastEAN = String(txt).trim();
+      beep(); flash.style.display="block"; setTimeout(()=>flash.style.display="none", 200);
+      html5Qr.stop().then(()=> handleEAN(lastEAN));
+    }
+    function scanAgain(){
+      hide(chkPanel); hide(pricePanel); hide(sellPanel); hide(inPanel); hide(inNewPanel);
+      lastEAN = null; startScanner();
+    }
+
+    /* ===== ROUTES ===== */
+    function goSell(){ hide(home); startScanner(); currentRoute="sell"; }
+    function goIn(){ hide(home); startScanner(); currentRoute="in"; }
+    function goCheck(){ hide(home); startScanner(); currentRoute="check"; }
+    function goPriceChange(){ hide(home); startScanner(); currentRoute="price"; }
+    function goInventory(){
+      hide(home);
+      backBtnWrap.classList.remove("hidden");
+      show(invStart); hide(invCount); hide(invClose); // paprastai
+    }
+
+    let currentRoute = null;
+
+    function handleEAN(ean){
+      if (currentRoute==="sell"){
+        const p = products[ean];
+        if (!p){ // BLOCK unknown on SELL
+          hide(scannerScreen);
+          popup("EAN yra nežinomas — susisiekite su administratoriumi.");
+          backBtnWrap.classList.remove("hidden");
+          // parodyti tik info kortelę be veiksmų
+          sellInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag err">Nežinoma prekė</div>`;
+          qtyInput.value=""; priceInput.value=""; priceInput.disabled=true;
+          hide(sellChips);
+          show(sellPanel);
+          return;
+        }
+        prepareSellUI(ean, p);
+      }
+      else if (currentRoute==="in"){
+        const p = products[ean];
+        if (p){ prepareInExisting(ean, p); }
+        else { prepareInNew(ean); }
+      }
+      else if (currentRoute==="check"){
+        const p = products[ean];
+        prepareCheckUI(ean, p);
+      }
+      else if (currentRoute==="price"){
+        const p = products[ean];
+        if (!p){
+          hide(scannerScreen);
+          priceInfo.innerHTML = `<div class="tag">EAN: ${ean}</div><div class="tag err">Nežinoma prekė (pirmiausia priimkite IN režimu)</div>`;
+          show(pricePanel);
+          return;
+        }
+        hide(scannerScreen);
+        priceInfo.innerHTML = `
+          <div class="tag">EAN: ${ean}</div>
+          <div class="tag">${p.name||"-"}</div>
+          <div class="tag">Unit: ${p.unit||"-"}</div>
+          <div class="tag">Dabartinė kaina: ${formatEUR(p.price)}</div>
+        `;
+        priceNew.value="";
+        show(pricePanel);
+      }
+    }
+
+    /* ===== SELL UI ===== */
+    function prepareSellUI(ean, p){
+      hide(scannerScreen);
+      const stockTxt = "—"; // pirmam etapui nerodom sistemos kiekio (skaitymo endpoint bus vėliau)
+      sellInfo.innerHTML = `
+        <div class="tag">EAN: ${ean}</div>
+        <div class="tag">${p.name||"-"}</div>
+        <div class="tag">Unit: ${p.unit||"-"}</div>
+        <div class="tag">Kaina: ${formatEUR(p.price)}</div>
+        <div class="tag">Likutis: ${stockTxt}</div>
+      `;
+      qtyLabel.textContent = (p.unit==="ml") ? "Kiek ml?" : "Kiek vnt?";
+      qtyInput.value = (p.unit==="ml") ? "" : "1";
+      priceInput.value = p.price != null ? String(p.price).replace(".", ",") : "0,00";
+      priceInput.disabled = true;
+
+      // chips for perfume quick ml
+      if (p.unit==="ml"){
+        sellChips.innerHTML = "";
+        ["30","40","50","100"].forEach(v=>{
+          const c=document.createElement("div"); c.className="chip"; c.textContent=v+" ml";
+          c.onclick=()=>{ qtyInput.value=v; };
+          sellChips.appendChild(c);
+        });
+        show(sellChips);
+      } else {
+        hide(sellChips);
+      }
+
+      show(sellPanel);
+      qtyInput.focus();
+    }
+    function enableOverride(){ priceInput.disabled=false; priceInput.focus(); }
+
+    function confirmSale(){
+      const ean = lastEAN;
+      const p = products[ean];
+      if (!p){ popup("Nežinoma prekė."); return; }
+      const qty = parseInt((qtyInput.value||"0").replace(",",".").trim(),10);
+      if (!(qty>0)){ popup("Įveskite kiekį"); return; }
+      const override = !priceInput.disabled;
+      let unitPrice = parseCommaNumber(priceInput.value);
+      if (!override) unitPrice = Number(p.price||0);
+
+      // queue to OUT (fire-and-forget)
+      const payload = {
+        EAN: ean,
+        "UnitName": p.name||"",
+        "Qty": qty,
+        "Unit": p.unit||"",
+        "UnitPrice": unitPrice,
+        "Override": override,
+        "user_id": currentUser?.id || "",
+        "EventId": "sale_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
+      };
+      sendPOST(OUT_URL, payload);
+
+      // UI reset immediately for next
+      hide(sellPanel);
+      lastEAN=null; startScanner();
+    }
+
+    /* ===== IN (existing) ===== */
+    function prepareInExisting(ean, p){
+      hide(scannerScreen); hide(inNewPanel);
+      inInfo.innerHTML = `
+        <div class="tag">EAN: ${ean}</div>
+        <div class="tag">${p.name||"-"}</div>
+        <div class="tag">Unit: ${p.unit||"-"}</div>
+        <div class="tag">Kaina: ${formatEUR(p.price)}</div>
+      `;
+      inQty.value="";
+      show(inPanel); inQty.focus();
+    }
+    function confirmIn(){
+      const ean = lastEAN;
+      const p = products[ean];
+      const qty = parseInt((inQty.value||"0").replace(",",".").trim(),10);
+      if (!(qty>0)){ popup("Įveskite kiekį"); inQty.focus(); return; }
+      // existing: kainos nekeičiam (pagal taisyklę)
+      const payload = {
+        "EAN": ean,
+        "UnitName": p?.name || "",
+        "Qty": qty,
+        "Unit": p?.unit || "",
+        "Price": p?.price || 0, // nesiunčiam naujos kainos
+        "user_id": currentUser?.id || "",
+        "EventId": "in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
+      };
+      sendPOST(IN_URL, payload);
+      // UI reset
+      hide(inPanel); lastEAN=null; startScanner();
+    }
+
+    /* ===== IN (new product) ===== */
+    function prepareInNew(ean){
+      hide(scannerScreen); hide(inPanel);
+      newEAN.textContent = ean;
+      newName.value=""; newUnit.value="ml"; newPrice.value=""; newQty.value="";
+      show(inNewPanel); newName.focus();
+    }
+    function saveNewAndIn(){
+      const ean = lastEAN;
+      const name = (newName.value||"").trim();
+      const unit = (newUnit.value||"ml");
+      const price = parseCommaNumber(newPrice.value);
+      const qty = parseInt((newQty.value||"0").replace(",",".").trim(),10);
+      if (!name){ popup("Įveskite pavadinimą"); return; }
+      if (!(qty>0)){ popup("Įveskite kiekį"); return; }
+
+      // Update local product base immediately
+      products[ean] = { name, unit, price };
+      saveProducts();
+
+      // Post IN row with Unit Name + Unit + Price
+      const payload = {
+        "EAN": ean,
+        "UnitName": name,
+        "Qty": qty,
+        "Unit": unit,
+        "Price": price,
+        "user_id": currentUser?.id || "",
+        "EventId": "in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
+      };
+      sendPOST(IN_URL, payload);
+
+      // Reset
+      hide(inNewPanel); lastEAN=null; startScanner();
+    }
+
+    /* ===== CHECK STOCK (placeholder qty) ===== */
+    function prepareCheckUI(ean, p){
+      hide(scannerScreen);
+      const priceTxt = p? formatEUR(p.price) : "—";
+      const unitTxt = p? (p.unit || "—") : "—";
+      const nameTxt = p? (p.name || "—") : "—";
+      const qtyTxt = "—"; // šiuo etapu nerodome sistemos kiekio
+      chkInfo.innerHTML = `
+        <div class="tag">EAN: ${ean}</div>
+        <div class="tag">Pavadinimas: ${nameTxt}</div>
+        <div class="tag">Unit: ${unitTxt}</div>
+        <div class="tag">Kaina: ${priceTxt}</div>
+        <div class="tag">Kiekis (sisteminiai): ${qtyTxt}</div>
+      `;
+      show(chkPanel);
+    }
+
+    /* ===== GLOBAL PRICE CHANGE (222) ===== */
+    function confirmGlobalPrice(){
+      const ean = lastEAN;
+      const p = products[ean];
+      if (!p){ popup("Nežinoma prekė"); return; }
+      const price = parseCommaNumber(priceNew.value);
+      if (!(price>=0)){ popup("Įveskite kainą"); return; }
+      // taisyklė: įrašom naują IN eilutę su Qty=0 ir nauja kaina
+      const payload = {
+        "EAN": ean,
+        "UnitName": p.name || "",
+        "Qty": 0,
+        "Unit": p.unit || "",
+        "Price": price,
+        "user_id": currentUser?.id || "",
+        "EventId": "in_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)
+      };
+      sendPOST(IN_URL, payload);
+      // atnaujinti vietinę bazę
+      products[ean].price = price; saveProducts();
+      popup("Kaina pakeista");
+      hide(pricePanel); lastEAN=null; startScanner();
+    }
+
+    /* ===== INVENTORY ===== */
+    function startInventory(){
+      const date = invDate.value || new Date().toISOString().slice(0,10);
+      if (!confirm(`Pradėti inventorizaciją ${date}?`)) return;
+      sendPOST(INV_URL, { action:"start", date, user_id: currentUser?.id || "" });
+      popup("Inventorizacija pradėta");
+      hide(invStart); startScanner(); // pereinam į skenavimą ir skaičiavimą
+      // kai nuskenuos — parodys invCount UI
+    }
+    function confirmInvCount(){
+      const ean = lastEAN;
+      const p = products[ean] || {};
+      const name = p.name || "";
+      const qty = parseInt((invQty.value||"0").replace(",",".").trim(),10);
+      if (!(qty>=0)){ popup("Įveskite kiekį"); invQty.focus(); return; }
+      sendPOST(INV_URL, { action:"count", EAN: ean, NAME: name, QTY: qty, user_id: currentUser?.id || "" });
+      hide(invCount); lastEAN=null; startScanner();
+    }
+    function closeInventory(){
+      if (!confirm("Ar tikrai uždaryti inventorizaciją?")) return;
+      sendPOST(INV_URL, { action:"close", user_id: currentUser?.id || "" });
+      popup("Inventorizacija uždaryta");
+    }
+
+    /* Nuskenavus EAN inventorizacijos metu – parodyti invCount UI */
+    function handleEAN_inventory(ean){
+      hide(scannerScreen);
+      const p = products[ean] || {};
+      invInfo.innerHTML = `
+        <div class="tag">EAN: ${ean}</div>
+        <div class="tag">Pavadinimas: ${p.name||"—"}</div>
+        <div class="tag">Sisteminiai: —</div>
+      `;
+      invQty.value = "";
+      show(invCount);
+      invQty.focus();
+    }
+
+    // peradresuoti handleEAN jei route == inventory counting
+    const origHandleEAN = handleEAN;
+    handleEAN = function(ean){
+      if (currentRoute==="sell" || currentRoute==="in" || currentRoute==="check" || currentRoute==="price"){
+        origHandleEAN(ean);
+      } else {
+        // inventorizacijos skaičiavimas
+        handleEAN_inventory(ean);
+      }
+    }
+
+    /* ===== SETTINGS ===== */
+    function goSettings(){
+      hide(home); backBtnWrap.classList.remove("hidden");
+      show(settings);
+    }
+    function clearCache(){
+      if (!confirm("Išvalyti vietinę talpyklą (produktų bazę šiame įrenginyje)?")) return;
+      products = {}; saveProducts(); popup("Išvalyta");
+    }
+
+    /* ===== NETWORK (fire-and-forget su retry) ===== */
+    function sendPOST(url, obj){
+      // siųsti su no-cors, jei offline — bandysim pakartoti
+      fire(url, obj).catch(()=> {
+        // retry mechanizmas (iki MAX_RETRIES)
+        let tries = 0;
+        const tick = ()=>{
+          tries++;
+          fire(url, obj).catch(()=>{
+            if (tries<MAX_RETRIES) setTimeout(tick, RETRY_MS);
+            else popup("Nepavyko išsiųsti (pasitikrinkite ryšį)");
+          });
+        };
+        setTimeout(tick, RETRY_MS);
       });
-      totalsDiv.textContent = `Total Sales: ${count} | Total Volume: ${total} ml`;
-    }
-    function statusText(s) {
-      if (s.status === "ok") return "✅";
-      if (s.status === "retry") return `⚠️ retry ${s.retries}/3`;
-      if (s.status === "fail") return "❌ failed";
-      return "";
-    }
 
-    // Popup
-    function showPopup(msg) {
-      popup.textContent = msg; popup.style.display = "block";
-      setTimeout(() => popup.style.display = "none", 4000);
+      function fire(u, o){
+        return fetch(u, {
+          method:"POST",
+          mode:"no-cors",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(o)
+        });
+      }
     }
   </script>
 </body>
 </html>
+
 
 
 
